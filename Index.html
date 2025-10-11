@@ -881,7 +881,11 @@ ${context}
 
 
         // --- PDF Processing & Generation Logic (MODIFIED) ---
+                    // --- PDF Processing & Generation Logic (MODIFIED for PARALLELISM) ---
         async function processPDFs(apiKey) {
+            // --- CONFIGURATION for Parallelism ---
+            const batchSize = 4; // Number of requests to send in parallel. Start with 3-5.
+
             for (let fileIndex = 0; fileIndex < pdfFiles.length; fileIndex++) {
                 if (!isProcessing) break;
                 const file = pdfFiles[fileIndex];
@@ -902,48 +906,59 @@ ${context}
                         const textContent = await page.getTextContent();
                         fullText += textContent.items.map(item => item.str).join(' ') + '\n';
                     }
-                    fullText = fullText.replace(/\s+/g, ' ').trim(); // Clean up the full text
+                    fullText = fullText.replace(/\s+/g, ' ').trim();
 
-                    // Simple chunking strategy: split the text into chunks of ~2500 chars
                     const chunkSize = 2500;
                     const textChunks = [];
                     for (let i = 0; i < fullText.length; i += chunkSize) {
                         textChunks.push(fullText.substring(i, i + chunkSize));
                     }
-                    updateStatus(`Split ${file.name} into ${textChunks.length} text chunks.`);
+                    updateStatus(`Split ${file.name} into ${textChunks.length} text chunks. Processing in batches of ${batchSize}...`);
 
-                    for (let chunkIndex = 0; chunkIndex < textChunks.length; chunkIndex++) {
-                        if (!isProcessing) break; // Check for stop request
+                    // *** BATCH PROCESSING LOGIC ***
+                    for (let i = 0; i < textChunks.length; i += batchSize) {
+                        if (!isProcessing) break; // Check for stop request before starting a batch
 
-                        const context = textChunks[chunkIndex];
-                        const generatedPair = await callOpenRouterAPI(apiKey, context);
+                        const chunkBatch = textChunks.slice(i, i + batchSize);
+                        
+                        const targetDisplay = targetPairs > 0 ? `/${targetPairs}` : '';
+                        updateStatus(`Processing batch ${Math.floor(i / batchSize) + 1}. (Total pairs: ${currentPairs}${targetDisplay})`);
 
-                        if (generatedPair && !generatedPair.error) {
-                             // Add extra metadata for fine-tuning
-                            const finalObject = {
-                                source_book: file.name,
-                                system: "You are a helpful assistant specialized in psychology, body language, and human behavior.",
-                                instruction: generatedPair.instruction,
-                                output: generatedPair.output
-                            };
+                        // Create an array of promises for the current batch
+                        const promises = chunkBatch.map(context => callOpenRouterAPI(apiKey, context));
 
-                            instructionDataset.push(finalObject);
-                            currentPairs++;
-                            updateOutput();
-                        } else {
-                            updateStatus(`Skipping chunk due to error: ${generatedPair?.message || 'Unknown error'}.`);
-                             if (generatedPair?.error === 'config_error') {
-                                isProcessing = false; // Stop on critical config errors
+                        // Wait for all promises in the batch to settle (either succeed or fail)
+                        const results = await Promise.allSettled(promises);
+
+                        // Process the results of the batch
+                        results.forEach(result => {
+                            if (result.status === 'fulfilled' && result.value && !result.value.error) {
+                                if (targetPairs > 0 && currentPairs >= targetPairs) {
+                                    isProcessing = false; // Stop if target is reached mid-batch
+                                    return;
+                                }
+                                const finalObject = {
+                                    source_book: file.name,
+                                    system: "You are a helpful assistant specialized in psychology, body language, and human behavior.",
+                                    instruction: result.value.instruction,
+                                    output: result.value.output
+                                };
+                                instructionDataset.push(finalObject);
+                                currentPairs++;
+                            } else {
+                                const errorMessage = result.reason?.message || result.value?.message || 'Unknown error';
+                                console.warn(`A request in the batch failed or returned an error: ${errorMessage}`);
                             }
-                        }
+                        });
 
-                        // Check if target is reached
+                        updateOutput(); // Update the UI after each batch is processed
+
+                        // Check again if target is reached or processing stopped
                         if (targetPairs > 0 && currentPairs >= targetPairs) {
                             isProcessing = false;
                         }
-                        
-                        await new Promise(resolve => setTimeout(resolve, 500)); // Rate limit delay
-                    } // End chunk loop
+                        if (!isProcessing) break;
+                    } // End batch loop
 
                 } catch (pdfError) {
                     console.error(`Error processing PDF ${file.name}:`, pdfError);
