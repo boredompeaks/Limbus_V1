@@ -709,12 +709,11 @@
 
 
         <div class="button-group">
+    <button id="startButton">Start Generation</button>
+    <button id="stopButton" disabled>Stop</button>
+    <button id="downloadButton" disabled>Download JSON</button>
+    <button id="clearButton">Clear & Reset</button> </div>
 
-            <button id="startButton">Start Generation</button>
-
-            <button id="stopButton" disabled>Stop</button>
-
-            <button id="downloadButton" disabled>Download JSON</button>
 
         </div>
 
@@ -953,41 +952,211 @@ ${context}
 
                         updateOutput(); // Update the UI after each batch is processed
 
-                        // Check again if target is reached or processing stopped
-                        if (targetPairs > 0 && currentPairs >= targetPairs) {
-                            isProcessing = false;
-                        }
-                        if (!isProcessing) break;
-                    } // End batch loop
+    <script>
+        // Set workerSrc for pdf.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-                } catch (pdfError) {
-                    console.error(`Error processing PDF ${file.name}:`, pdfError);
-                    updateStatus(`Error processing PDF ${file.name}: ${pdfError.message}. Skipping.`);
-                } finally {
-                    URL.revokeObjectURL(objectUrl);
-                    if (pdfDoc) await pdfDoc.destroy();
-                }
-                if (!isProcessing) break; // Exit file loop if stopped
-            } // End file loop
+        // --- DOM Elements ---
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const apiKeyInput = document.getElementById('apiKey');
+        const targetPairsInput = document.getElementById('targetPairsInput');
+        const modelSelect = document.getElementById('modelSelect');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const clearButton = document.getElementById('clearButton'); // New button
+        const statusDiv = document.getElementById('status');
+        const h1Title = document.querySelector('h1');
+        const outputLabel = document.querySelector('label[for="output"]');
+        const outputTextArea = document.getElementById('output');
+
+
+        // --- UI Updates to reflect new purpose ---
+        h1Title.textContent = 'PDF to Instruction Dataset';
+        outputLabel.textContent = 'Generated Instruction Data (JSONL Format Preview):';
+        document.title = 'PDF to Instruction Dataset Generator'; // Update page title
+
+
+        // --- State Variables ---
+        let pdfFiles = [];
+        let instructionDataset = [];
+        let isProcessing = false;
+        let stopRequested = false;
+        let currentPairs = 0;
+        let targetPairs = 0;
+        const MAX_FILES = 5;
+        const PAGES_TO_SKIP_START = 20;
+        const PAGES_TO_SKIP_END = 20;
+        const STORAGE_KEY = 'instructionDatasetState'; // Key for localStorage
+
+        // --- Add Styling for New Button ---
+        const style = document.createElement('style');
+        style.textContent = `
+            #clearButton { background-color: #f44336; color: white; }
+            #clearButton:hover:not(:disabled) { background-color: #d32f2f; }
+        `;
+        document.head.appendChild(style);
+
+        // --- State Persistence Functions (NEW) ---
+        function saveState() {
+            try {
+                const state = {
+                    dataset: instructionDataset,
+                    pairs: currentPairs
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.error("Error saving state to localStorage:", e);
+                updateStatus("Warning: Could not save progress. Storage might be full.", true);
+            }
         }
 
-
-        function updateOutput() {
+        function loadState() {
             try {
-                 // To avoid crashing the browser with huge datasets, show only the last 50 items.
-                const previewData = instructionDataset.slice(-50);
-                const previewText = previewData.map(item => JSON.stringify(item)).join('\n');
-                outputTextArea.value = `Displaying last ${previewData.length} of ${instructionDataset.length} total pairs...\n\n` + previewText;
-                outputTextArea.scrollTop = outputTextArea.scrollHeight;
-                updateButtonStates();
+                const savedStateJSON = localStorage.getItem(STORAGE_KEY);
+                if (savedStateJSON) {
+                    const savedState = JSON.parse(savedStateJSON);
+                    instructionDataset = savedState.dataset || [];
+                    currentPairs = savedState.pairs || 0;
+                    updateOutput();
+                    updateStatus(`Loaded previous session with ${currentPairs} pairs. Ready to resume.`);
+                } else {
+                     updateStatus("Idle. Select PDF(s), enter API key, and set target pairs.");
+                }
             } catch (e) {
-                console.error("Error updating output text area:", e);
-                outputTextArea.value = "Error displaying JSON data. See console.";
+                console.error("Error loading state from localStorage:", e);
+                updateStatus("Error loading previous session. Starting fresh.", true);
+                clearState();
+            }
+        }
+
+        function clearState() {
+            localStorage.removeItem(STORAGE_KEY);
+            instructionDataset = [];
+            currentPairs = 0;
+            pdfFiles = [];
+            renderFileList();
+            updateOutput();
+            updateStatus("Cleared all data. Ready to start a new session.");
+        }
+
+        clearButton.addEventListener('click', () => {
+             if (confirm("Are you sure you want to clear all generated data and reset the session? This cannot be undone.")) {
+                clearState();
+            }
+        });
+
+
+        // --- File Handling (Unchanged) ---
+        function handleFiles(files) { const newlySelected = Array.from(files).filter(file => file.type === 'application/pdf'); if (pdfFiles.length + newlySelected.length > MAX_FILES) { updateStatus(`Error: Cannot select more than ${MAX_FILES} PDF files.`); return; } newlySelected.forEach(newFile => { if (!pdfFiles.some(existingFile => existingFile.name === newFile.name)) { pdfFiles.push(newFile); } }); renderFileList(); updateStatus(`Ready to process ${pdfFiles.length} file(s).`); updateButtonStates(); }
+        function renderFileList() { fileList.innerHTML = ''; pdfFiles.forEach((file, index) => { const li = document.createElement('li'); const fileNameSpan = document.createElement('span'); fileNameSpan.textContent = `${index + 1}. ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`; li.appendChild(fileNameSpan); const removeBtn = document.createElement('button'); removeBtn.textContent = 'Remove'; removeBtn.onclick = (e) => { e.stopPropagation(); pdfFiles.splice(index, 1); renderFileList(); updateStatus(`Removed file. Ready to process ${pdfFiles.length} file(s).`); updateButtonStates(); }; li.appendChild(removeBtn); fileList.appendChild(li); }); }
+        dropZone.addEventListener('dragover', (event) => { event.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+        dropZone.addEventListener('drop', (event) => { event.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(event.dataTransfer.files); });
+        fileInput.addEventListener('change', (event) => { handleFiles(event.target.files); fileInput.value = ''; });
+
+        // --- Status Update (Unchanged) ---
+        function updateStatus(message, isWarning = false) { console[isWarning ? 'warn' : 'log']("Status:", message); statusDiv.textContent = `Status: ${message}`; statusDiv.style.color = isWarning ? '#ffcc80' : '#bdbdbd'; }
+
+        // --- Download (Unchanged from JSONL version) ---
+        function triggerDownload() { if (instructionDataset.length === 0) { return; } try { const jsonlString = instructionDataset.map(item => JSON.stringify(item)).join('\n'); const blob = new Blob([jsonlString], { type: 'application/jsonl' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; const modelNameSanitized = modelSelect.value.replace(/[^a-z0-9_-]/gi, '_'); const filename = `instruction_dataset_${currentPairs}_pairs_${modelNameSanitized}.jsonl`; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); updateStatus(`JSONL file download initiated (${currentPairs} pairs) as ${filename}.`); } catch (error) { console.error("Error creating download file:", error); updateStatus("Error creating download file."); } }
+        downloadButton.addEventListener('click', triggerDownload);
+
+        // --- API Call (Unchanged from varied prompt version) ---
+        async function callOpenRouterAPI(apiKey, context) {
+            const selectedModel = modelSelect.value;
+            if (!selectedModel) { updateStatus("Error: No model selected.", true); return { error: 'config_error', message: 'No model selected.' }; }
+            const baseURL = "https://openrouter.ai/api/v1";
+            const headers = { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" };
+            const systemPrompt = `You are an expert curriculum designer specializing in psychology. Your task is to transform a raw text segment from a book into a concise and varied instruction-response pair for an AI model's training data. From the text chunk provided below, create ONLY ONE of the following types of interactions: 1. A definitional question. 2. A scenario-based question. 3. An interpretive question about a specific action. 4. A 'how-to' or application question. 5. A comparative question. RULES: - Choose a different type of question for each new text chunk you process. - The response MUST be grounded exclusively in the provided text. - Keep the instruction and the response clear, accurate, and concise. - Your final output must be ONLY a single, valid JSON object with two keys: "instruction" and "output". Do not add explanations or markdown. Here is the text chunk: --- ${context} ---`;
+            const messages = [{ role: "user", content: systemPrompt }];
+            const targetDisplay = targetPairs > 0 ? `/${targetPairs}` : '';
+            updateStatus(`Generating with ${selectedModel} (Pair ${currentPairs + 1}${targetDisplay})...`);
+            try {
+                const response = await fetch(`${baseURL}/chat/completions`, { method: "POST", headers: headers, body: JSON.stringify({ model: selectedModel, messages: messages, response_format: { type: "json_object" } }), });
+                if (!response.ok) { const errorBody = await response.text(); let detail = errorBody; try { detail = JSON.parse(errorBody).error?.message || errorBody; } catch (e) { } throw new Error(`API Error: ${response.status} ${response.statusText} - ${detail}`); }
+                const completion = await response.json();
+                const rawContent = completion.choices[0]?.message?.content?.trim();
+                if (!rawContent) { throw new Error("API Error: Received an empty response."); }
+                updateStatus(`Received response from ${selectedModel}. Parsing...`);
+                let parsedJson = JSON.parse(rawContent);
+                if (typeof parsedJson !== 'object' || !parsedJson.instruction || !parsedJson.output) { throw new Error("Parsed JSON has incorrect format."); }
+                return parsedJson;
+            } catch (error) { console.error(`Error with API call or parsing:`, error); updateStatus(`Error: ${error.message}`); return { error: 'api_or_parse_error', message: error.message }; }
+        }
+
+        // --- PDF Processing (MODIFIED to save state) ---
+        async function processPDFs(apiKey) {
+            const batchSize = 4;
+            for (let fileIndex = 0; fileIndex < pdfFiles.length; fileIndex++) {
+                if (!isProcessing) break;
+                const file = pdfFiles[fileIndex];
+                updateStatus(`Loading PDF ${fileIndex + 1}/${pdfFiles.length}: ${file.name}...`);
+                let pdfDoc;
+                const objectUrl = URL.createObjectURL(file);
+                try {
+                    pdfDoc = await pdfjsLib.getDocument(objectUrl).promise;
+                    updateStatus(`Loaded ${file.name} (${pdfDoc.numPages} pages). Extracting text...`);
+                    const startPage = PAGES_TO_SKIP_START + 1;
+                    const endPage = pdfDoc.numPages - PAGES_TO_SKIP_END;
+                    if (startPage > endPage) { updateStatus(`Skipping ${file.name}: Not enough pages.`); continue; }
+                    let fullText = '';
+                    for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
+                        const page = await pdfDoc.getPage(pageNum);
+                        const textContent = await page.getTextContent();
+                        fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+                    }
+                    fullText = fullText.replace(/\s+/g, ' ').trim();
+                    const chunkSize = 2500;
+                    const textChunks = [];
+                    for (let i = 0; i < fullText.length; i += chunkSize) { textChunks.push(fullText.substring(i, i + chunkSize)); }
+                    updateStatus(`Split ${file.name} into ${textChunks.length} chunks. Processing in batches of ${batchSize}...`);
+                    for (let i = 0; i < textChunks.length; i += batchSize) {
+                        if (!isProcessing) break;
+                        const chunkBatch = textChunks.slice(i, i + batchSize);
+                        const targetDisplay = targetPairs > 0 ? `/${targetPairs}` : '';
+                        updateStatus(`Processing batch ${Math.floor(i / batchSize) + 1}. (Total pairs: ${currentPairs}${targetDisplay})`);
+                        const promises = chunkBatch.map(context => callOpenRouterAPI(apiKey, context));
+                        const results = await Promise.allSettled(promises);
+                        let batchHasNewData = false;
+                        results.forEach(result => {
+                            if (result.status === 'fulfilled' && result.value && !result.value.error) {
+                                if (targetPairs > 0 && currentPairs >= targetPairs) { isProcessing = false; return; }
+                                const finalObject = { source_book: file.name, system: "You are a helpful assistant specialized in psychology...", instruction: result.value.instruction, output: result.value.output };
+                                instructionDataset.push(finalObject);
+                                currentPairs++;
+                                batchHasNewData = true;
+                            } else { const errorMessage = result.reason?.message || result.value?.message || 'Unknown error'; console.warn(`A request in the batch failed: ${errorMessage}`); }
+                        });
+
+                        if (batchHasNewData) {
+                            updateOutput();
+                            saveState(); // *** SAVE PROGRESS HERE ***
+                        }
+
+                        if (targetPairs > 0 && currentPairs >= targetPairs) { isProcessing = false; }
+                        if (!isProcessing) break;
+                    }
+                } catch (pdfError) { console.error(`Error processing PDF ${file.name}:`, pdfError); updateStatus(`Error processing PDF: ${pdfError.message}. Skipping.`); }
+                finally { URL.revokeObjectURL(objectUrl); if (pdfDoc) await pdfDoc.destroy(); }
+                if (!isProcessing) break;
             }
         }
 
 
-        // --- Control Button States (Unchanged logic, but essential) ---
+        // --- Output & Button State Updates ---
+        function updateOutput() {
+            try {
+                const previewData = instructionDataset.slice(-50);
+                const previewText = previewData.map(item => JSON.stringify(item)).join('\n');
+                outputTextArea.value = (instructionDataset.length > 50 ? `Displaying last 50 of ${instructionDataset.length} total pairs...\n\n` : '') + previewText;
+                outputTextArea.scrollTop = outputTextArea.scrollHeight;
+                updateButtonStates();
+            } catch (e) { console.error("Error updating output:", e); outputTextArea.value = "Error displaying data."; }
+        }
+
         function updateButtonStates() {
             const hasData = instructionDataset.length > 0;
             startButton.disabled = isProcessing;
@@ -996,6 +1165,7 @@ ${context}
             targetPairsInput.disabled = isProcessing;
             modelSelect.disabled = isProcessing;
             fileInput.disabled = isProcessing;
+            clearButton.disabled = isProcessing;
             document.querySelector('.select-pdf-button-container button').disabled = isProcessing;
             dropZone.style.pointerEvents = isProcessing ? 'none' : 'auto';
             dropZone.onclick = isProcessing ? null : () => document.getElementById('fileInput').click();
@@ -1005,59 +1175,38 @@ ${context}
             downloadButton.disabled = isProcessing || !hasData;
         }
 
-
-        // --- Start & Stop Button Logic (MODIFIED for new flow) ---
+        // --- Start & Stop Button Logic (MODIFIED) ---
         startButton.addEventListener('click', async () => {
-            const apiKey = apiKeyInput.value.trim(); if (!apiKey) { updateStatus("Error: API Key is required.", true); return; } if (pdfFiles.length === 0) { updateStatus("Error: Please select at least one PDF file.", true); return; } if (!modelSelect.value) { updateStatus("Error: Please select a model.", true); return; }
-            targetPairs = parseInt(targetPairsInput.value, 10) || 0; if (targetPairs < 0) targetPairs = 0; targetPairsInput.value = targetPairs;
+            const apiKey = apiKeyInput.value.trim(); if (!apiKey) { updateStatus("Error: API Key is required.", true); return; } if (pdfFiles.length === 0) { updateStatus("Error: Please select at least one PDF.", true); return; } if (!modelSelect.value) { updateStatus("Error: Please select a model.", true); return; }
 
+            if (instructionDataset.length > 0) {
+                if (!confirm(`You have a saved session with ${currentPairs} pairs. Do you want to continue adding to this session? (Click 'Cancel' to clear old data and start a new session).`)) {
+                    clearState();
+                }
+            }
+
+            targetPairs = parseInt(targetPairsInput.value, 10) || 0; if (targetPairs < 0) targetPairs = 0; targetPairsInput.value = targetPairs;
             isProcessing = true;
             stopRequested = false;
-            currentPairs = 0;
-            instructionDataset = [];
-            outputTextArea.value = '';
-
             updateButtonStates();
             updateStatus(`Starting processing... Target: ${targetPairs > 0 ? targetPairs : 'unlimited'} pairs.`);
 
             try {
-                await processPDFs(apiKey); // Run the core logic
-
-                if (stopRequested) {
-                    updateStatus(`Processing stopped by user (${currentPairs} pairs generated).`);
-                } else if (targetPairs > 0 && currentPairs >= targetPairs) {
-                    updateStatus(`Target of ${targetPairs} pairs reached. Auto-downloading...`);
-                    triggerDownload();
-                } else {
-                    updateStatus(`Processing finished naturally (${currentPairs} pairs generated).`);
-                }
-
-            } catch (error) {
-                 updateStatus(`CRITICAL ERROR: ${error.message}`, true);
-                 console.error("Critical error in startButton handler:", error);
-            } finally {
-                isProcessing = false;
-                stopRequested = false;
-                updateButtonStates(); // Re-enable controls
-            }
+                await processPDFs(apiKey);
+                if (stopRequested) { updateStatus(`Processing stopped by user (${currentPairs} pairs generated).`); }
+                else if (targetPairs > 0 && currentPairs >= targetPairs) { updateStatus(`Target of ${targetPairs} pairs reached. Auto-downloading...`); triggerDownload(); }
+                else { updateStatus(`Processing finished naturally (${currentPairs} pairs generated).`); }
+            } catch (error) { updateStatus(`CRITICAL ERROR: ${error.message}`, true); console.error("Critical error in startButton handler:", error); }
+            finally { isProcessing = false; stopRequested = false; updateButtonStates(); }
         });
 
-        stopButton.addEventListener('click', () => {
-            if (!isProcessing) return;
-            stopRequested = true;
-            isProcessing = false; // This will stop the loops
-            updateStatus("Stop requested... Finishing current API call and stopping.");
+        stopButton.addEventListener('click', () => { if (!isProcessing) return; stopRequested = true; isProcessing = false; updateStatus("Stop requested..."); });
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState(); // Load any saved data on page load
+            updateButtonStates();
         });
-
-        // --- Initial State ---
-        updateStatus("Idle. Select PDF(s), enter API key, choose model, and set target pairs.");
-        updateButtonStates();
-
     </script>
-
-
 </body>
-
-
-
 </html>
