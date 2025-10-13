@@ -118,7 +118,7 @@
             flex-direction: column; 
             height: 100%; 
             position: relative; 
-            overflow: hidden; /* <-- THIS IS THE FIX */
+            overflow: hidden;
         }
         header { text-align: center; padding: 1rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
         #menu-toggle-btn {
@@ -134,9 +134,9 @@
             flex-grow: 1; width: 95%; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column;
             background: var(--color-glass-bg); border: 1px solid var(--color-glass-border); border-radius: 15px;
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            margin-bottom: 1rem; /* Add some space at the bottom */
+            margin-bottom: 1rem;
         }
-        .control-panel { height: 1px; padding: 0.5rem; } /* Placeholder to maintain layout, can be removed */
+        .control-panel { height: 1px; padding: 0.5rem; }
 
         #chat-window { flex-grow: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; transition: opacity 0.3s ease; }
         #chat-window.fading { opacity: 0.5; }
@@ -267,7 +267,7 @@
     <div id="app-container">
         <nav class="sidebar">
             <button id="new-chat-btn" class="sidebar-item">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                 <span class="item-text">New Chat</span>
             </button>
             <div id="chat-history"></div>
@@ -276,7 +276,7 @@
                     <div class="sidebar-item">Settings</div>
                 </div>
                 <div id="user-profile-btn" class="sidebar-item">
-                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
                     <span class="item-text">User Profile</span>
                 </div>
             </div>
@@ -284,7 +284,7 @@
         <div class="main-content">
             <header>
                  <button id="menu-toggle-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
                  </button>
                 <h1 id="main-title">Limbus_V1</h1>
             </header>
@@ -302,7 +302,7 @@
                     <div class="input-area">
                         <textarea id="user-input" placeholder="Enter your prompt here..." rows="1"></textarea>
                         <button id="send-btn" disabled>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24" fill="currentColor"><path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" /></svg>
                         </button>
                     </div>
                 </div>
@@ -423,46 +423,75 @@
             scrollToBottom();
             return messageEl;
         };
-        
-        const streamAiResponse = () => {
+
+        // =================================================================================
+        // --- API INTEGRATION SECTION ---
+        // =================================================================================
+
+        // LINE 565: REPLACE THIS URL WITH YOUR ACTUAL BACKEND ENDPOINT
+        const API_URL = '/api/v1/chat'; 
+
+        const streamAiResponse = async () => {
             state.isTyping = true;
             elements.typingIndicator.classList.remove('hidden');
             scrollToBottom();
 
-            // Simulate API failure
-            if (Math.random() < 0.1) {
-                setTimeout(() => {
-                    createMessageElement('ai', "Sorry, I couldn't connect to the Limbus_V1 network. Please try again.", true);
-                    state.isTyping = false;
-                    elements.typingIndicator.classList.add('hidden');
-                }, 1000);
-                return;
-            }
-
             const aiMessageEl = createMessageElement('ai');
-            const responseText = state.activeMode === 'analyst'
-                ? "Analyzing data... The simulated API response is now streaming token by token, providing a real-time conversational experience."
-                : "Of course, I'd be happy to help. This response is being streamed to demonstrate how the final application will feel: interactive and immediate.";
-            const tokens = responseText.split(' ');
-            let currentToken = 0;
+            let fullResponse = "";
 
-            const streamInterval = setInterval(() => {
-                if (currentToken < tokens.length) {
-                    aiMessageEl.textContent += (currentToken > 0 ? ' ' : '') + tokens[currentToken];
-                    currentToken++;
-                    scrollToBottom();
-                } else {
-                    clearInterval(streamInterval);
-                    state.isTyping = false;
-                    elements.typingIndicator.classList.add('hidden');
-                    const chat = state.chats.find(c => c.id === state.currentChatId);
-                    if (chat) {
-                        chat.messages.push({ id: `msg-${Date.now()}`, role: 'ai', content: aiMessageEl.textContent });
-                        saveState();
-                    }
+            try {
+                const currentChat = state.chats.find(c => c.id === state.currentChatId);
+                if (!currentChat) throw new Error("Current chat not found.");
+
+                // Prepare the payload for the API
+                const payload = {
+                    mode: state.activeMode,
+                    messages: currentChat.messages.map(({ role, content }) => ({ role, content }))
+                };
+
+                // Make the POST request using the Fetch API
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
                 }
-            }, 80); // Adjust speed of streaming
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                // Read the stream
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    fullResponse += chunk;
+                    aiMessageEl.textContent = fullResponse;
+                    scrollToBottom();
+                }
+
+                // Finalize the message in the state once streaming is complete
+                currentChat.messages.push({ id: `msg-${Date.now()}`, role: 'ai', content: fullResponse });
+                saveState();
+
+            } catch (error) {
+                console.error("API Error:", error);
+                aiMessageEl.textContent = "Sorry, an error occurred. Please try again.";
+                aiMessageEl.classList.add('error');
+            } finally {
+                state.isTyping = false;
+                elements.typingIndicator.classList.add('hidden');
+            }
         };
+
+        // =================================================================================
+        // --- END OF API SECTION ---
+        // =================================================================================
+
 
         const handleSend = () => {
             const text = elements.userInput.value.trim();
@@ -480,7 +509,7 @@
                 state.chats.unshift(newChat);
                 state.currentChatId = newChatId;
                 saveState();
-                navigateTo(`/chat/${newChatId}`); // This will re-render
+                navigateTo(`/chat/${newChatId}`);
             } else {
                 createMessageElement('user', text);
                 const chat = state.chats.find(c => c.id === state.currentChatId);
@@ -490,7 +519,7 @@
             
             elements.userInput.value = '';
             handleInput();
-            streamAiResponse();
+            streamAiResponse(); // This now calls the real API function
         };
         
         const handleInput = () => {
