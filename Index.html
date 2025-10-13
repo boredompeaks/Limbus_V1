@@ -1,1212 +1,567 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
-
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>PDF to jsonl dataset</title> <!-- Version bump -->
-
+    <title>Limbus_V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        /* ---------------------------------- */
+        /* --- 1. Foundational Styling & Theme --- */
+        /* ---------------------------------- */
+        :root {
+            --font-title: 'Orbitron', sans-serif;
+            --font-body: 'Poppins', sans-serif;
 
-        /* --- Google Font Import --- */
+            --color-bg-start: #1b2735;
+            --color-bg-end: #090a0f;
 
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&display=swap');
+            --color-text-primary: #e0e0e0;
+            --color-text-secondary: #bdbdbd;
 
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap'); /* Keep Poppins for body */
+            --color-analyst: #00bcd4;
+            --color-companion: #4caf50;
+            --color-danger: #e53935;
+            --color-error-bg: rgba(229, 57, 53, 0.1);
+            
+            --color-glass-bg: rgba(255, 255, 255, 0.08);
+            --color-glass-border: rgba(255, 255, 255, 0.15);
+            
+            --active-accent: var(--color-analyst);
+        }
 
-
-
+        .analyst-mode { --active-accent: var(--color-analyst); }
+        .companion-mode { --active-accent: var(--color-companion); }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; }
         body {
-
-            font-family: 'Poppins', sans-serif;
-
-            line-height: 1.6;
-
-            padding: 20px 10px;
-
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-
-            color: #e0e0e0;
-
-            min-height: calc(100vh - 20px);
-
-            overflow-x: hidden;
-
-            box-sizing: border-box;
-
-        }
-
-
-
-        .container {
-
-            max-width: 850px;
-
-            margin: auto;
-
-            padding: 30px;
-
-            border-radius: 15px;
-
-            background: rgba(255, 255, 255, 0.08);
-
-            backdrop-filter: blur(15px);
-
-            -webkit-backdrop-filter: blur(15px);
-
-            border: 1px solid rgba(255, 255, 255, 0.18);
-
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-
-            transition: all 0.3s ease;
-
-        }
-
-
-
-        h1 {
-
-            text-align: center;
-
-            color: #00bcd4;
-
-            font-weight: 600;
-
-            margin-bottom: 35px;
-
-            font-family: 'Orbitron', sans-serif;
-
-            letter-spacing: 1.5px;
-
-            text-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
-
-        }
-
-
-
-        label {
-
-            display: block;
-
-            margin-bottom: 5px;
-
-            font-weight: 400;
-
-            color: #bdbdbd;
-
-            font-size: 0.9em;
-
-        }
-
-
-
-        input[type="text"],
-
-        input[type="password"],
-
-        input[type="number"],
-
-        select,
-
-        textarea {
-
-            width: 100%;
-
-            padding: 10px 12px;
-
-            margin-bottom: 10px;
-
-            border: 1px solid rgba(255, 255, 255, 0.2);
-
-            border-radius: 8px;
-
-            box-sizing: border-box;
-
-            background-color: rgba(0, 0, 0, 0.3);
-
-            color: #e0e0e0;
-
-            font-size: 0.95em;
-
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-
-            font-family: 'Poppins', sans-serif;
-
-        }
-
-
-
-        select {
-
-             appearance: none;
-
-             -webkit-appearance: none;
-
-             -moz-appearance: none;
-
-             background-image: url('data:image/svg+xml;utf8,<svg fill="%23bdbdbd" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
-
-             background-repeat: no-repeat;
-
-             background-position: right 10px center;
-
-             background-size: 18px;
-
-             padding-right: 35px;
-
-        }
-
-
-
-        input[type="text"]::placeholder,
-
-        input[type="password"]::placeholder,
-
-        input[type="number"]::placeholder,
-
-        textarea::placeholder {
-
-            color: #757575;
-
-            opacity: 1;
-
-        }
-
-
-
-        input[type="text"]:focus,
-
-        input[type="password"]:focus,
-
-        input[type="number"]:focus,
-
-        select:focus,
-
-        textarea:focus {
-
-            outline: none;
-
-            border-color: #00bcd4;
-
-            box-shadow: 0 0 8px rgba(0, 188, 212, 0.3);
-
-        }
-
-
-
-        textarea {
-
-            height: 250px;
-
-            resize: vertical;
-
-            font-family: 'Courier New', Courier, monospace;
-
-            font-size: 0.95em;
-
-            line-height: 1.5;
-
-        }
-
-
-
-        button {
-
-            background-color: #00bcd4;
-
-            color: #111;
-
-            padding: 10px 15px;
-
-            border: none;
-
-            border-radius: 8px;
-
-            cursor: pointer;
-
-            margin-right: 8px;
-
-            font-size: 0.95em;
-
-            font-weight: 600;
-
-            margin-bottom: 10px;
-
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-
-            vertical-align: bottom;
-
-             font-family: 'Poppins', sans-serif;
-
-        }
-
-
-
-        button:hover:not(:disabled) {
-
-            background-color: #0097a7;
-
-            transform: translateY(-1px);
-
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-
-        }
-
-
-
-        button:active:not(:disabled) {
-
-            transform: translateY(0px);
-
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-
-        }
-
-
-
-        button:disabled {
-
-            background-color: #555;
-
-            color: #999;
-
-            cursor: not-allowed;
-
-            box-shadow: none;
-
-            transform: none;
-
-        }
-
-        select:disabled {
-
-             background-color: #555;
-
-             color: #999;
-
-             cursor: not-allowed;
-
-             opacity: 0.7;
-
-         }
-
-
-
-
-
-        #stopButton {
-
-            background-color: #e53935;
-
-            color: #fff;
-
-        }
-
-
-
-        #stopButton:hover:not(:disabled) {
-
-            background-color: #c62828;
-
-        }
-
-
-
-        #downloadButton {
-
-            background-color: #4caf50;
-
-            color: #fff;
-
-        }
-
-
-
-        #downloadButton:hover:not(:disabled) {
-
-            background-color: #388e3c;
-
-        }
-
-
-
-        .select-pdf-button-container {
-
-            margin-bottom: 20px;
-
-            text-align: left;
-
-        }
-
-
-
-        .select-pdf-button-container button {
-
-            background-color: transparent;
-
-            border: 1px solid #00bcd4;
-
-            color: #00bcd4;
-
-            box-shadow: none;
-
-            margin-right: 0;
-
-            display: inline-block;
-
-             padding: 10px 20px;
-
-        }
-
-
-
-        .select-pdf-button-container button:hover {
-
-            background-color: rgba(0, 188, 212, 0.1);
-
-            color: #26c6da;
-
-            transform: translateY(-1px);
-
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-
-        }
-
-
-
-        #dropZone {
-
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-
-            border-radius: 10px;
-
-            padding: 30px;
-
-            text-align: center;
-
-            margin-bottom: 20px;
-
-            cursor: pointer;
-
-            transition: border-color 0.3s ease, background-color 0.3s ease;
-
-            color: #bdbdbd;
-
-            background: rgba(255, 255, 255, 0.05);
-
-            backdrop-filter: blur(5px);
-
-            -webkit-backdrop-filter: blur(5px);
-
-        }
-
-
-
-        #dropZone.dragover,
-
-        #dropZone:hover {
-
-            border-color: #00bcd4;
-
-            background-color: rgba(0, 188, 212, 0.1);
-
-            color: #e0e0e0;
-
-        }
-
-
-
-        #fileList {
-
-            list-style: none;
-
-            padding: 0;
-
-            margin-bottom: 20px;
-
-            margin-top: 20px;
-
-        }
-
-
-
-        #fileList li {
-
-            background: rgba(255, 255, 255, 0.06);
-
-            backdrop-filter: blur(5px);
-
-            -webkit-backdrop-filter: blur(5px);
-
-            border: 1px solid rgba(255, 255, 255, 0.1);
-
-            padding: 8px 12px;
-
-            margin-bottom: 6px;
-
-            border-radius: 8px;
-
-            font-size: 0.9em;
-
+            font-family: var(--font-body);
+            background: radial-gradient(ellipse at bottom, var(--color-bg-start) 0%, var(--color-bg-end) 100%);
+            color: var(--color-text-primary);
+            overflow: hidden;
             display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        /* ---------------------------------- */
+        /* --- 2. Initial Loading Screen --- */
+        /* ---------------------------------- */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--color-bg-end);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
+        }
+        .loader-animation { width: 100px; height: 100px; position: relative; }
+        .loader-animation::before, .loader-animation::after {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 100%; height: 100%;
+            border-radius: 50%; border: 2px solid transparent;
+            animation: pulse 2.5s linear infinite;
+        }
+        .loader-animation::before { border-top-color: var(--color-analyst); }
+        .loader-animation::after { border-bottom-color: var(--color-companion); animation-delay: -1.25s; }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(0.1); opacity: 1; }
+            70% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+        }
+        #loading-text { margin-top: 2rem; color: var(--color-text-secondary); font-size: 1rem; transition: opacity 0.3s ease; }
 
-            justify-content: space-between;
+        /* ---------------------------------- */
+        /* --- 3. Main App Layout & Sidebar --- */
+        /* ---------------------------------- */
+        #app-container { display: flex; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s ease-in; }
+        .sidebar {
+            width: 80px; height: 100%; background: rgba(0, 0, 0, 0.2);
+            border-right: 1px solid var(--color-glass-border); display: flex; flex-direction: column;
+            padding: 1rem 0; transition: width 0.3s ease; flex-shrink: 0; z-index: 200;
+        }
+        .sidebar.expanded { width: 280px; }
+        .sidebar-header, .sidebar-footer { padding: 0 1.5rem; }
+        .sidebar.expanded .sidebar-header, .sidebar.expanded .sidebar-footer { padding: 0 1.25rem; }
+        .sidebar-item {
+            display: flex; align-items: center; padding: 0.75rem 1.5rem; cursor: pointer;
+            border-radius: 8px; margin: 0.125rem 0.5rem; white-space: nowrap; overflow: hidden;
+            color: var(--color-text-secondary); transition: background-color 0.2s ease, color 0.2s ease;
+            position: relative;
+        }
+        .sidebar-item:hover { background-color: var(--color-glass-bg); color: var(--color-text-primary); }
+        .sidebar-item.active { background-color: var(--active-accent); color: #000; font-weight: 600; }
+        .sidebar-item svg { width: 24px; height: 24px; flex-shrink: 0; margin-right: 1rem; }
+        .sidebar-item .item-text { opacity: 0; transition: opacity 0.2s ease; }
+        .sidebar.expanded .item-text { opacity: 1; }
+        #new-chat-btn { border: 1px solid var(--color-glass-border); margin: 0 0.5rem 1rem 0.5rem; color: var(--color-text-primary); }
+        #chat-history { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
+        #chat-history::-webkit-scrollbar { width: 5px; }
+        #chat-history::-webkit-scrollbar-track { background: transparent; }
+        #chat-history::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+        #chat-history::-webkit-scrollbar-thumb:hover { background: #777; }
+        .sidebar-footer { position: relative; }
+        #user-profile-menu {
+            display: none; position: absolute; bottom: 100%; left: 0.5rem; width: 250px;
+            background: #1e1f22; border-radius: 8px; border: 1px solid var(--color-glass-border);
+            padding: 0.5rem; margin-bottom: 0.5rem; z-index: 10;
+        }
+        #user-profile-menu.show { display: block; }
+        
+        /* ---------------------------------- */
+        /* --- 4. Main Chat Interface --- */
+        /* ---------------------------------- */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; height: 100%; position: relative; }
+        header { text-align: center; padding: 1rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        #menu-toggle-btn {
+            display: none; background: none; border: none; color: var(--color-text-secondary); cursor: pointer;
+            position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+        }
+        #menu-toggle-btn svg { width: 28px; height: 28px; }
+        h1#main-title {
+            font-family: var(--font-title); font-size: 1.75rem; font-weight: 700; color: var(--color-text-primary);
+            text-shadow: 0 0 5px var(--active-accent), 0 0 10px var(--active-accent); transition: text-shadow 0.3s ease;
+        }
+        .main-container {
+            flex-grow: 1; width: 95%; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column;
+            background: var(--color-glass-bg); border: 1px solid var(--color-glass-border); border-radius: 15px;
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .control-panel { height: 1px; padding: 0.5rem; } /* Placeholder to maintain layout, can be removed */
 
-            align-items: center;
+        #chat-window { flex-grow: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; transition: opacity 0.3s ease; }
+        #chat-window.fading { opacity: 0.5; }
+        #chat-window::-webkit-scrollbar { width: 5px; }
+        #chat-window::-webkit-scrollbar-track { background: transparent; }
+        #chat-window::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+        #chat-window::-webkit-scrollbar-thumb:hover { background: #777; }
 
-            color: #ccc;
+        .chat-message { max-width: 80%; padding: 0.75rem 1rem; border-radius: 12px; line-height: 1.6; animation: fadeIn 0.5s ease; white-space: pre-wrap; word-wrap: break-word; }
+        .user-message { align-self: flex-end; background-color: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--active-accent); border-top-left-radius: 0; border-bottom-left-radius: 0; }
+        .ai-message { align-self: flex-start; background-color: var(--color-glass-bg); position: relative; }
+        .ai-message.error { background-color: var(--color-error-bg); border-left: 3px solid var(--color-danger); color: var(--color-danger); }
+        .ai-message .message-toolbar {
+            position: absolute; top: 5px; right: -45px; display: flex; flex-direction: column; gap: 8px;
+            opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .ai-message:hover .message-toolbar { opacity: 1; visibility: visible; }
+        .toolbar-btn { background: #2c2f33; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: #bdbdbd; cursor: pointer; }
+        .toolbar-btn:hover { color: #fff; }
+        .toolbar-btn svg { width: 16px; height: 16px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        #typing-indicator { display: flex; align-items: center; gap: 5px; padding: 0.75rem 1rem; }
+        #typing-indicator .dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--active-accent); animation: pulse-dot 1.4s infinite ease-in-out both; }
+        #typing-indicator .dot:nth-child(1) { animation-delay: -0.32s; }
+        #typing-indicator .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes pulse-dot { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+        
+        .input-area-container { padding: 1rem 1.5rem; flex-shrink: 0; margin: 0 auto; width: 95%; max-width: 900px; }
 
-            transition: background-color 0.3s ease, border-color 0.3s ease;
+        #model-selector { display: flex; justify-content: center; margin-bottom: 0.75rem; gap: 8px; }
+        .model-btn {
+            background: transparent; border: 1px solid var(--color-glass-border); color: var(--color-text-secondary); padding: 0.25rem 0.75rem; border-radius: 16px;
+            cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.3s ease;
+        }
+        .model-btn.active { color: #000; background-color: var(--active-accent); border-color: var(--active-accent); }
 
+        .input-area { display: flex; align-items: flex-end; background-color: rgba(0, 0, 0, 0.3); border-radius: 12px; padding: 0.5rem; border: 1px solid transparent; transition: border-color 0.2s ease; }
+        .input-area:focus-within { border-color: var(--active-accent); }
+        #user-input {
+            flex-grow: 1; background: transparent; border: none; outline: none; resize: none; color: var(--color-text-primary);
+            font-family: var(--font-body); font-size: 1rem; padding: 0.5rem; max-height: 200px;
+        }
+        #send-btn {
+            background-color: var(--active-accent); border: none; border-radius: 8px; width: 40px; height: 40px; display: flex;
+            align-items: center; justify-content: center; cursor: pointer; color: #111;
+            transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.3s ease; flex-shrink: 0;
+        }
+        #send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: scale(0.95); }
+        #send-btn:not(:disabled):hover { transform: scale(1.05); }
+        #send-btn svg { width: 20px; height: 20px; }
+
+        /* ---------------------------------- */
+        /* --- 5. Modals & Context Menus --- */
+        /* ---------------------------------- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7);
+            display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0;
+            visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: var(--color-bg-start); padding: 2rem; border-radius: 15px; border: 1px solid var(--color-glass-border);
+            width: 90%; max-width: 400px; text-align: center; transform: scale(0.95); transition: transform 0.3s;
+        }
+        .modal-overlay.show .modal-content { transform: scale(1); }
+        .modal-content h3 { margin-bottom: 1rem; font-family: var(--font-title); }
+        .modal-content p { margin-bottom: 2rem; color: var(--color-text-secondary); }
+        .modal-buttons { display: flex; gap: 1rem; justify-content: center; }
+        .modal-btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        .modal-btn.confirm { background-color: var(--color-danger); color: white; }
+        .modal-btn.confirm:hover { background-color: #c62828; }
+        .modal-btn.cancel { background-color: #4f4f4f; color: var(--color-text-primary); }
+        .modal-btn.cancel:hover { background-color: #616161; }
+
+        #chat-context-menu {
+            position: absolute; background: #1e1f22; border: 1px solid var(--color-glass-border);
+            border-radius: 8px; padding: 0.5rem; z-index: 1001; display: none;
+        }
+        .context-menu-item {
+            background: none; border: none; color: var(--color-text-primary); display: block;
+            width: 100%; text-align: left; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;
+        }
+        .context-menu-item:hover { background-color: var(--color-glass-bg); }
+
+        /* ---------------------------------- */
+        /* --- 6. Helper & Responsive Classes --- */
+        /* ---------------------------------- */
+        .hidden { display: none !important; }
+        #mobile-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 199;
         }
 
-
-
-        #fileList li:hover {
-
-            background: rgba(255, 255, 255, 0.1);
-
-            border-color: rgba(255, 255, 255, 0.2);
-
+        @media (max-width: 768px) {
+            #menu-toggle-btn { display: block; }
+            .sidebar { position: fixed; left: -280px; transition: left 0.3s ease; }
+            .sidebar.sidebar-open { left: 0; }
+            .sidebar.expanded { width: 280px; }
+            .sidebar:not(.expanded) { pointer-events: none; }
+            .sidebar.expanded { pointer-events: auto; }
+            .main-content { width: 100%; }
+            .main-container, .input-area-container { width: 100%; border-radius: 0; }
+            .chat-message { max-width: 90%; }
+            .ai-message:hover .message-toolbar { display: none; }
         }
-
-
-
-        #fileList li button {
-
-            margin-left: 10px;
-
-            padding: 2px 6px;
-
-            font-size: 0.8em;
-
-            margin-bottom: 0;
-
-            background-color: rgba(229, 57, 53, 0.6);
-
-            color: #fff;
-
-            font-weight: 400;
-
-            box-shadow: none;
-
-            border-radius: 5px;
-
-        }
-
-
-
-        #fileList li button:hover {
-
-            background-color: rgba(229, 57, 53, 0.9);
-
-            transform: scale(1.05);
-
-            box-shadow: none;
-
-        }
-
-
-
-        #status {
-
-            margin-top: 15px;
-
-            font-weight: 400;
-
-            color: #bdbdbd;
-
-            min-height: 1.6em;
-
-            font-size: 0.95em;
-
-        }
-
-
-
-        .hidden-file-input {
-
-            display: none;
-
-        }
-
-
-
-        .input-row {
-
-            display: flex;
-
-            flex-wrap: wrap;
-
-            align-items: flex-start;
-
-            gap: 15px;
-
-            margin-bottom: 20px;
-
-        }
-
-
-
-        .input-row > div {
-
-            flex: 1;
-
-            min-width: 200px;
-
-        }
-
-
-
-        .input-row label {
-
-            margin-bottom: 5px;
-
-        }
-
-
-
-        .button-group {
-
-            margin-top: 5px;
-
-            margin-bottom: 15px;
-
-            text-align: left;
-
-        }
-
-
-
-        .button-group button {
-
-            margin-bottom: 10px;
-
-             margin-right: 10px;
-
-        }
-
-        .button-group button:last-child {
-
-            margin-right: 0;
-
-        }
-
     </style>
-
-    <!-- PDF.js CDN -->
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
-
 </head>
-
-
-
-<body>
-
-    <div class="container">
-
-        <h1>PDF to ShareGPT Converter v0.9.1</h1>
-
-
-
-        <!-- MODIFIED: Added onclick handler and updated text -->
-
-        <div id="dropZone" onclick="document.getElementById('fileInput').click();">
-
-            Drag & Drop up to 5 PDF files here, or click here to select.
-
-        </div>
-
-        <input type="file" id="fileInput" class="hidden-file-input" multiple accept=".pdf">
-
-
-
-        <!-- ORIGINAL "Select PDFs" button remains functional -->
-
-        <div class="select-pdf-button-container">
-
-             <button type="button" onclick="document.getElementById('fileInput').click();">
-
-                 Select PDFs
-
-             </button>
-
-        </div>
-
-
-
-        <div class="input-row">
-
-            <div>
-
-                <label for="apiKey">OpenRouter API Key:</label>
-
-                <input type="password" id="apiKey" placeholder="Enter your OpenRouter API Key">
-
-            </div>
-
-            <div>
-
-                <label for="modelSelect">Select Model:</label>
-
-                <select id="modelSelect">
-
-                    <option value="deepseek/deepseek-chat-v3-0324" selected>DeepSeek V3 0324</option>
-
-                    <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-
-                    <option value="google/gemini-2.5-flash-preview">Gemini 2.5 Flash Preview</option>
-
-                    <option value="openai/gpt-4o">GPT-4o</option>
-
-                    <option value="minimax/minimax-01">MiniMax-01</option>
-
-                    <option value="anthropic/claude-3.7-sonnet">Claude 3.7 Sonnet</option>
-
-                    <option value="openai/gpt-4o-mini">GPT-4o-mini</option>
-
-                    <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash</option>
-
-                    <option value="deepseek/deepseek-chat">DeepSeek V3</option>
-
-                    <option value="meta-llama/llama-4-maverick:free">Llama 4 Maverick (free)</option>
-
-                    <option value="deepseek/deepseek-chat-v3-0324:free">DeepSeek V3 0324 (free)</option>
-
-                    <option value="meta-llama/llama-4-scout:free">Llama 4 Scout (free)</option>
-
-                    <option value="qwen/qwen3-235b-a22b:free">Qwen3 235B A22B (free)</option>
-
-                </select>
-
-            </div>
-
-             <div>
-
-                <label for="targetPairsInput">Target Pairs (0 for no limit):</label>
-
-                <input type="number" id="targetPairsInput" min="0" value="1000" placeholder="e.g., 1000">
-
-            </div>
-
-        </div>
-
-
-
-        <ul id="fileList"></ul>
-
-
-
-        <div class="button-group">
-    <button id="startButton">Start Generation</button>
-    <button id="stopButton" disabled>Stop</button>
-    <button id="downloadButton" disabled>Download JSON</button>
-    <button id="clearButton">Clear & Reset</button> </div>
-
-
-        </div>
-
-
-
-        <div>
-
-            <label for="output">Generated ShareGPT Data (JSON):</label>
-
-            <textarea id="output" readonly placeholder="Generated conversation data will appear here..."></textarea>
-
-        </div>
-
-        <div id="status">Status: Idle</div>
-
-
-
+<body class="analyst-mode">
+
+    <div id="loading-screen">
+        <div class="loader-animation"></div>
+        <p id="loading-text">Warming up the neural nets...</p>
     </div>
 
+    <div id="mobile-overlay"></div>
+    <div id="app-container">
+        <nav class="sidebar">
+            <button id="new-chat-btn" class="sidebar-item">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                <span class="item-text">New Chat</span>
+            </button>
+            <div id="chat-history"></div>
+            <div class="sidebar-footer">
+                <div id="user-profile-menu">
+                    <div class="sidebar-item">Settings</div>
+                </div>
+                <div id="user-profile-btn" class="sidebar-item">
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                    <span class="item-text">User Profile</span>
+                </div>
+            </div>
+        </nav>
+        <div class="main-content">
+            <header>
+                 <button id="menu-toggle-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                 </button>
+                <h1 id="main-title">Limbus_V1</h1>
+            </header>
+            <div class="main-container">
+                <div class="control-panel"></div>
+                <div id="chat-window"></div>
+                <div id="typing-indicator" class="hidden">
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                </div>
+                <div class="input-area-container">
+                    <div id="model-selector">
+                        <button id="analyst-btn" class="model-btn active">Analyst</button>
+                        <button id="companion-btn" class="model-btn">Companion</button>
+                    </div>
+                    <div class="input-area">
+                        <textarea id="user-input" placeholder="Enter your prompt here..." rows="1"></textarea>
+                        <button id="send-btn" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="confirmation-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title">Confirm Action</h3>
+            <p id="modal-text">Are you sure?</p>
+            <div class="modal-buttons">
+                <button id="modal-cancel-btn" class="modal-btn cancel">Cancel</button>
+                <button id="modal-confirm-btn" class="modal-btn confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
 
-
-        <script>
-        // Set workerSrc for pdf.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        // DOM Elements
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const fileList = document.getElementById('fileList');
-        const apiKeyInput = document.getElementById('apiKey');
-        const targetPairsInput = document.getElementById('targetPairsInput');
-        const modelSelect = document.getElementById('modelSelect');
-        const startButton = document.getElementById('startButton');
-        const stopButton = document.getElementById('stopButton');
-        const outputTextArea = document.getElementById('output');
-        const downloadButton = document.getElementById('downloadButton');
-        const statusDiv = document.getElementById('status');
-        const h1Title = document.querySelector('h1');
-        const outputLabel = document.querySelector('label[for="output"]');
-
-        // --- UI Updates to reflect new purpose ---
-        h1Title.textContent = 'PDF to Instruction Dataset';
-        outputLabel.textContent = 'Generated Instruction Data (JSONL Format Preview):';
-
-
-        // State Variables
-        let pdfFiles = [];
-        let instructionDataset = [];
-        let isProcessing = false;
-        let stopRequested = false;
-        let currentPairs = 0;
-        let targetPairs = 0;
-        const MAX_FILES = 5;
-        const PAGES_TO_SKIP_START = 20; // Skips title, contents, intro
-        const PAGES_TO_SKIP_END = 20;   // Skips index, bibliography
-
-        // --- File Handling (Unchanged) ---
-        function handleFiles(files) { const newlySelected = Array.from(files).filter(file => file.type === 'application/pdf'); if (pdfFiles.length + newlySelected.length > MAX_FILES) { updateStatus(`Error: Cannot select more than ${MAX_FILES} PDF files.`); return; } newlySelected.forEach(newFile => { if (!pdfFiles.some(existingFile => existingFile.name === newFile.name)) { pdfFiles.push(newFile); } }); renderFileList(); outputTextArea.value = ''; instructionDataset = []; currentPairs = 0; updateStatus(`Ready to process ${pdfFiles.length} file(s).`); updateButtonStates(); }
-        function renderFileList() { fileList.innerHTML = ''; pdfFiles.forEach((file, index) => { const li = document.createElement('li'); const fileNameSpan = document.createElement('span'); fileNameSpan.textContent = `${index + 1}. ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`; li.appendChild(fileNameSpan); const removeBtn = document.createElement('button'); removeBtn.textContent = 'Remove'; removeBtn.onclick = (e) => { e.stopPropagation(); pdfFiles.splice(index, 1); renderFileList(); outputTextArea.value = ''; instructionDataset = []; currentPairs = 0; updateStatus(`Removed file. Ready to process ${pdfFiles.length} file(s).`); updateButtonStates(); }; li.appendChild(removeBtn); fileList.appendChild(li); }); }
-        dropZone.addEventListener('dragover', (event) => { event.preventDefault(); dropZone.classList.add('dragover'); });
-        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
-        dropZone.addEventListener('drop', (event) => { event.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(event.dataTransfer.files); });
-        fileInput.addEventListener('change', (event) => { handleFiles(event.target.files); fileInput.value = ''; });
-
-        // --- Status Update (Unchanged) ---
-        function updateStatus(message, isWarning = false) { console[isWarning ? 'warn' : 'log']("Status:", message); statusDiv.textContent = `Status: ${message}`; statusDiv.style.color = isWarning ? '#ffcc80' : '#bdbdbd'; }
-
-        // --- Download (MODIFIED for JSONL) ---
-        function triggerDownload() {
-            if (instructionDataset.length === 0) {
-                console.warn("triggerDownload called with no data.");
-                return false;
-            }
-            try {
-                // Format as JSONL (one JSON object per line)
-                const jsonlString = instructionDataset.map(item => JSON.stringify(item)).join('\n');
-                const blob = new Blob([jsonlString], { type: 'application/jsonl' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                const modelNameSanitized = modelSelect.value.replace(/[^a-z0-9_-]/gi, '_');
-                const filename = `instruction_dataset_${currentPairs}_pairs_${modelNameSanitized}.jsonl`; // Changed extension
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                updateStatus(`JSONL file download initiated (${currentPairs} pairs) as ${filename}.`);
-                return true;
-            } catch (error) {
-                console.error("Error creating download file:", error);
-                updateStatus("Error creating download file.");
-                return false;
-            }
-        }
-        downloadButton.addEventListener('click', triggerDownload);
-
-        // --- API Call (HEAVILY MODIFIED) ---
-        async function callOpenRouterAPI(apiKey, context) {
-            const selectedModel = modelSelect.value;
-            if (!selectedModel) {
-                 updateStatus("Error: No model selected. Please choose a model from the list.", true);
-                 return { error: 'config_error', message: 'No model selected.' };
-            }
-
-            const baseURL = "https://openrouter.ai/api/v1";
-
-            const headers = {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            };
-
-             // THIS IS OUR NEW, SUPERIOR SYSTEM PROMPT
-             const systemPrompt = `You are an expert curriculum designer specializing in psychology. Your task is to transform a raw text segment from a book into a concise and varied instruction-response pair for an AI model's training data.
-
-From the text chunk provided below, create ONLY ONE of the following types of interactions:
-1.  A **definitional question** (e.g., "Define the term 'cognitive dissonance'.")
-2.  A **scenario-based question** (e.g., "A person is tapping their foot and avoiding eye contact during a meeting. Based on the text, what might this indicate?")
-3.  An **interpretive question** about a specific action (e.g., "What is the psychological significance of a 'Duchenne smile'?")
-4.  A **'how-to' or application question** (e.g., "Based on the text, what are three ways to build rapport quickly?")
-5.  A **comparative question** (e.g., "What is the key difference between an emblem and an illustrator in body language?")
-
-RULES:
--   Choose a different type of question for each new text chunk you process to ensure variety.
--   The response MUST be grounded exclusively in the provided text. Do not invent information.
--   Keep the instruction and the response clear, accurate, and concise.
--   Your final output must be ONLY a single, valid JSON object with two keys: "instruction" and "output". Do not add explanations or markdown formatting like \`\`\`json.
-
-Here is the text chunk:
----
-${context}
----`;
-
-            const messages = [{ role: "user", content: systemPrompt }]; // Simplified message structure
-
-            const targetDisplay = targetPairs > 0 ? `/${targetPairs}` : '';
-            const statusPrefix = `Generating with ${selectedModel} (Pair ${currentPairs + 1}${targetDisplay})...`;
-            updateStatus(statusPrefix);
-
-            try {
-                const response = await fetch(`${baseURL}/chat/completions`, {
-                    method: "POST", headers: headers,
-                    body: JSON.stringify({ model: selectedModel, messages: messages, response_format: { type: "json_object" } }),
-                });
-                if (!response.ok) { const errorBody = await response.text(); let detail = errorBody; try { detail = JSON.parse(errorBody).error?.message || errorBody; } catch (e) {/* ignore */ } throw new Error(`API Error: ${response.status} ${response.statusText} - ${detail}`); }
-
-                const completion = await response.json();
-                const rawContent = completion.choices[0]?.message?.content?.trim();
-                 if (!rawContent) { throw new Error("API Error: Received an empty response from the model."); }
-                updateStatus(`Received response from ${selectedModel}. Parsing...`);
-
-                let parsedJson = JSON.parse(rawContent);
-                if (typeof parsedJson !== 'object' || !parsedJson.instruction || !parsedJson.output) {
-                    throw new Error("Parsed JSON does not contain required 'instruction' and 'output' keys.");
-                }
-                return parsedJson;
-
-            } catch (error) {
-                console.error(`Error with API call or parsing:`, error);
-                updateStatus(`Error: ${error.message}`);
-                return { error: 'api_or_parse_error', message: error.message };
-            }
-        }
-
-
-        // --- PDF Processing & Generation Logic (MODIFIED) ---
-                    // --- PDF Processing & Generation Logic (MODIFIED for PARALLELISM) ---
-        async function processPDFs(apiKey) {
-            // --- CONFIGURATION for Parallelism ---
-            const batchSize = 4; // Number of requests to send in parallel. Start with 3-5.
-
-            for (let fileIndex = 0; fileIndex < pdfFiles.length; fileIndex++) {
-                if (!isProcessing) break;
-                const file = pdfFiles[fileIndex];
-                updateStatus(`Loading PDF ${fileIndex + 1}/${pdfFiles.length}: ${file.name}...`);
-                let pdfDoc;
-                const objectUrl = URL.createObjectURL(file);
-
-                try {
-                    pdfDoc = await pdfjsLib.getDocument(objectUrl).promise;
-                    updateStatus(`Loaded ${file.name} (${pdfDoc.numPages} pages). Extracting text...`);
-                    const startPage = PAGES_TO_SKIP_START + 1;
-                    const endPage = pdfDoc.numPages - PAGES_TO_SKIP_END;
-                    if (startPage > endPage) { updateStatus(`Skipping ${file.name}: Not enough pages.`); continue; }
-
-                    let fullText = '';
-                    for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
-                        const page = await pdfDoc.getPage(pageNum);
-                        const textContent = await page.getTextContent();
-                        fullText += textContent.items.map(item => item.str).join(' ') + '\n';
-                    }
-                    fullText = fullText.replace(/\s+/g, ' ').trim();
-
-                    const chunkSize = 2500;
-                    const textChunks = [];
-                    for (let i = 0; i < fullText.length; i += chunkSize) {
-                        textChunks.push(fullText.substring(i, i + chunkSize));
-                    }
-                    updateStatus(`Split ${file.name} into ${textChunks.length} text chunks. Processing in batches of ${batchSize}...`);
-
-                    // *** BATCH PROCESSING LOGIC ***
-                    for (let i = 0; i < textChunks.length; i += batchSize) {
-                        if (!isProcessing) break; // Check for stop request before starting a batch
-
-                        const chunkBatch = textChunks.slice(i, i + batchSize);
-                        
-                        const targetDisplay = targetPairs > 0 ? `/${targetPairs}` : '';
-                        updateStatus(`Processing batch ${Math.floor(i / batchSize) + 1}. (Total pairs: ${currentPairs}${targetDisplay})`);
-
-                        // Create an array of promises for the current batch
-                        const promises = chunkBatch.map(context => callOpenRouterAPI(apiKey, context));
-
-                        // Wait for all promises in the batch to settle (either succeed or fail)
-                        const results = await Promise.allSettled(promises);
-
-                        // Process the results of the batch
-                        results.forEach(result => {
-                            if (result.status === 'fulfilled' && result.value && !result.value.error) {
-                                if (targetPairs > 0 && currentPairs >= targetPairs) {
-                                    isProcessing = false; // Stop if target is reached mid-batch
-                                    return;
-                                }
-                                const finalObject = {
-                                    source_book: file.name,
-                                    system: "You are a helpful assistant specialized in psychology, body language, and human behavior.",
-                                    instruction: result.value.instruction,
-                                    output: result.value.output
-                                };
-                                instructionDataset.push(finalObject);
-                                currentPairs++;
-                            } else {
-                                const errorMessage = result.reason?.message || result.value?.message || 'Unknown error';
-                                console.warn(`A request in the batch failed or returned an error: ${errorMessage}`);
-                            }
-                        });
-
-                        updateOutput(); // Update the UI after each batch is processed
+    <div id="chat-context-menu">
+        <button class="context-menu-item" id="rename-chat-btn">Rename</button>
+        <button class="context-menu-item" id="delete-chat-btn">Delete</button>
+    </div>
 
     <script>
-        // Set workerSrc for pdf.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    document.addEventListener('DOMContentLoaded', () => {
+        const getEl = (id) => document.getElementById(id);
+        const queryEl = (sel) => document.querySelector(sel);
 
-        // --- DOM Elements ---
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const fileList = document.getElementById('fileList');
-        const apiKeyInput = document.getElementById('apiKey');
-        const targetPairsInput = document.getElementById('targetPairsInput');
-        const modelSelect = document.getElementById('modelSelect');
-        const startButton = document.getElementById('startButton');
-        const stopButton = document.getElementById('stopButton');
-        const downloadButton = document.getElementById('downloadButton');
-        const clearButton = document.getElementById('clearButton'); // New button
-        const statusDiv = document.getElementById('status');
-        const h1Title = document.querySelector('h1');
-        const outputLabel = document.querySelector('label[for="output"]');
-        const outputTextArea = document.getElementById('output');
+        const elements = {
+            body: document.body, loadingScreen: getEl('loading-screen'), loadingText: getEl('loading-text'),
+            appContainer: getEl('app-container'), chatWindow: getEl('chat-window'),
+            userInput: getEl('user-input'), sendBtn: getEl('send-btn'),
+            typingIndicator: getEl('typing-indicator'), confirmationModal: getEl('confirmation-modal'),
+            modalConfirmBtn: getEl('modal-confirm-btn'), modalCancelBtn: getEl('modal-cancel-btn'),
+            modalTitle: getEl('modal-title'), modalText: getEl('modal-text'),
+            analystBtn: getEl('analyst-btn'), companionBtn: getEl('companion-btn'),
+            sidebar: queryEl('.sidebar'), userProfileBtn: getEl('user-profile-btn'),
+            userProfileMenu: getEl('user-profile-menu'), newChatBtn: getEl('new-chat-btn'),
+            chatHistory: getEl('chat-history'), menuToggleBtn: getEl('menu-toggle-btn'),
+            mobileOverlay: getEl('mobile-overlay'), chatContextMenu: getEl('chat-context-menu'),
+            renameChatBtn: getEl('rename-chat-btn'), deleteChatBtn: getEl('delete-chat-btn')
+        };
 
+        let state = {
+            activeMode: 'analyst', isTyping: false, chats: [], currentChatId: null, settings: { theme: 'dark' }
+        };
+        let longPressTimer, contextedChatId;
 
-        // --- UI Updates to reflect new purpose ---
-        h1Title.textContent = 'PDF to Instruction Dataset';
-        outputLabel.textContent = 'Generated Instruction Data (JSONL Format Preview):';
-        document.title = 'PDF to Instruction Dataset Generator'; // Update page title
-
-
-        // --- State Variables ---
-        let pdfFiles = [];
-        let instructionDataset = [];
-        let isProcessing = false;
-        let stopRequested = false;
-        let currentPairs = 0;
-        let targetPairs = 0;
-        const MAX_FILES = 5;
-        const PAGES_TO_SKIP_START = 20;
-        const PAGES_TO_SKIP_END = 20;
-        const STORAGE_KEY = 'instructionDatasetState'; // Key for localStorage
-
-        // --- Add Styling for New Button ---
-        const style = document.createElement('style');
-        style.textContent = `
-            #clearButton { background-color: #f44336; color: white; }
-            #clearButton:hover:not(:disabled) { background-color: #d32f2f; }
-        `;
-        document.head.appendChild(style);
-
-        // --- State Persistence Functions (NEW) ---
-        function saveState() {
-            try {
-                const state = {
-                    dataset: instructionDataset,
-                    pairs: currentPairs
-                };
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-            } catch (e) {
-                console.error("Error saving state to localStorage:", e);
-                updateStatus("Warning: Could not save progress. Storage might be full.", true);
-            }
-        }
-
-        function loadState() {
-            try {
-                const savedStateJSON = localStorage.getItem(STORAGE_KEY);
-                if (savedStateJSON) {
-                    const savedState = JSON.parse(savedStateJSON);
-                    instructionDataset = savedState.dataset || [];
-                    currentPairs = savedState.pairs || 0;
-                    updateOutput();
-                    updateStatus(`Loaded previous session with ${currentPairs} pairs. Ready to resume.`);
+        const saveState = () => localStorage.setItem('limbusV1State', JSON.stringify(state));
+        const loadState = () => {
+            const saved = localStorage.getItem('limbusV1State');
+            if (saved) state = JSON.parse(saved);
+        };
+        
+        const loadingMessages = ["Recalling principles...", "Calibrating biases...", "Ready."];
+        let msgIndex = 0;
+        const loadingInterval = setInterval(() => {
+            elements.loadingText.style.opacity = '0';
+            setTimeout(() => {
+                if (msgIndex < loadingMessages.length) {
+                    elements.loadingText.textContent = loadingMessages[msgIndex++];
+                    elements.loadingText.style.opacity = '1';
                 } else {
-                     updateStatus("Idle. Select PDF(s), enter API key, and set target pairs.");
+                    clearInterval(loadingInterval);
+                    setTimeout(() => {
+                        elements.loadingScreen.style.opacity = '0';
+                        elements.appContainer.style.opacity = '1';
+                        setTimeout(() => elements.loadingScreen.classList.add('hidden'), 500);
+                    }, 500);
                 }
-            } catch (e) {
-                console.error("Error loading state from localStorage:", e);
-                updateStatus("Error loading previous session. Starting fresh.", true);
-                clearState();
+            }, 300);
+        }, 1500);
+
+        const renderChatHistory = () => {
+            elements.chatHistory.innerHTML = '';
+            state.chats.forEach(chat => {
+                const chatEl = document.createElement('div');
+                chatEl.className = `sidebar-item ${chat.id === state.currentChatId ? 'active' : ''}`;
+                chatEl.dataset.chatId = chat.id;
+                chatEl.innerHTML = `<span class="item-text">${chat.title}</span>`;
+                elements.chatHistory.appendChild(chatEl);
+            });
+        };
+
+        const renderCurrentChat = () => {
+            elements.chatWindow.innerHTML = '';
+            const currentChat = state.chats.find(c => c.id === state.currentChatId);
+            if (currentChat) {
+                currentChat.messages.forEach(msg => createMessageElement(msg.role, msg.content));
             }
-        }
+        };
 
-        function clearState() {
-            localStorage.removeItem(STORAGE_KEY);
-            instructionDataset = [];
-            currentPairs = 0;
-            pdfFiles = [];
-            renderFileList();
-            updateOutput();
-            updateStatus("Cleared all data. Ready to start a new session.");
-        }
+        const navigateTo = (path) => { window.history.pushState({}, '', path); router(); };
+        const router = () => {
+            const path = window.location.pathname;
+            const chatIdMatch = path.match(/\/chat\/(.*)/);
+            state.currentChatId = chatIdMatch ? chatIdMatch[1] : null;
+            renderCurrentChat();
+            renderChatHistory();
+        };
+        window.addEventListener('popstate', router);
+        
+        const updateSelectorUI = (mode) => {
+            state.activeMode = mode;
+            elements.analystBtn.classList.toggle('active', mode === 'analyst');
+            elements.companionBtn.classList.toggle('active', mode === 'companion');
+            elements.body.className = `${mode}-mode`;
+        };
+        
+        const scrollToBottom = () => { elements.chatWindow.scrollTop = elements.chatWindow.scrollHeight; };
 
-        clearButton.addEventListener('click', () => {
-             if (confirm("Are you sure you want to clear all generated data and reset the session? This cannot be undone.")) {
-                clearState();
+        const createMessageElement = (role, text = '', isError = false) => {
+            const messageEl = document.createElement('div');
+            messageEl.classList.add('chat-message', `${role}-message`);
+            if (isError) messageEl.classList.add('error');
+            messageEl.textContent = text;
+            elements.chatWindow.appendChild(messageEl);
+            scrollToBottom();
+            return messageEl;
+        };
+        
+        const streamAiResponse = () => {
+            state.isTyping = true;
+            elements.typingIndicator.classList.remove('hidden');
+            scrollToBottom();
+
+            // Simulate API failure
+            if (Math.random() < 0.1) {
+                setTimeout(() => {
+                    createMessageElement('ai', "Sorry, I couldn't connect to the Limbus_V1 network. Please try again.", true);
+                    state.isTyping = false;
+                    elements.typingIndicator.classList.add('hidden');
+                }, 1000);
+                return;
             }
-        });
 
+            const aiMessageEl = createMessageElement('ai');
+            const responseText = state.activeMode === 'analyst'
+                ? "Analyzing data... The simulated API response is now streaming token by token, providing a real-time conversational experience."
+                : "Of course, I'd be happy to help. This response is being streamed to demonstrate how the final application will feel: interactive and immediate.";
+            const tokens = responseText.split(' ');
+            let currentToken = 0;
 
-        // --- File Handling (Unchanged) ---
-        function handleFiles(files) { const newlySelected = Array.from(files).filter(file => file.type === 'application/pdf'); if (pdfFiles.length + newlySelected.length > MAX_FILES) { updateStatus(`Error: Cannot select more than ${MAX_FILES} PDF files.`); return; } newlySelected.forEach(newFile => { if (!pdfFiles.some(existingFile => existingFile.name === newFile.name)) { pdfFiles.push(newFile); } }); renderFileList(); updateStatus(`Ready to process ${pdfFiles.length} file(s).`); updateButtonStates(); }
-        function renderFileList() { fileList.innerHTML = ''; pdfFiles.forEach((file, index) => { const li = document.createElement('li'); const fileNameSpan = document.createElement('span'); fileNameSpan.textContent = `${index + 1}. ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`; li.appendChild(fileNameSpan); const removeBtn = document.createElement('button'); removeBtn.textContent = 'Remove'; removeBtn.onclick = (e) => { e.stopPropagation(); pdfFiles.splice(index, 1); renderFileList(); updateStatus(`Removed file. Ready to process ${pdfFiles.length} file(s).`); updateButtonStates(); }; li.appendChild(removeBtn); fileList.appendChild(li); }); }
-        dropZone.addEventListener('dragover', (event) => { event.preventDefault(); dropZone.classList.add('dragover'); });
-        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
-        dropZone.addEventListener('drop', (event) => { event.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(event.dataTransfer.files); });
-        fileInput.addEventListener('change', (event) => { handleFiles(event.target.files); fileInput.value = ''; });
-
-        // --- Status Update (Unchanged) ---
-        function updateStatus(message, isWarning = false) { console[isWarning ? 'warn' : 'log']("Status:", message); statusDiv.textContent = `Status: ${message}`; statusDiv.style.color = isWarning ? '#ffcc80' : '#bdbdbd'; }
-
-        // --- Download (Unchanged from JSONL version) ---
-        function triggerDownload() { if (instructionDataset.length === 0) { return; } try { const jsonlString = instructionDataset.map(item => JSON.stringify(item)).join('\n'); const blob = new Blob([jsonlString], { type: 'application/jsonl' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; const modelNameSanitized = modelSelect.value.replace(/[^a-z0-9_-]/gi, '_'); const filename = `instruction_dataset_${currentPairs}_pairs_${modelNameSanitized}.jsonl`; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); updateStatus(`JSONL file download initiated (${currentPairs} pairs) as ${filename}.`); } catch (error) { console.error("Error creating download file:", error); updateStatus("Error creating download file."); } }
-        downloadButton.addEventListener('click', triggerDownload);
-
-        // --- API Call (Unchanged from varied prompt version) ---
-        async function callOpenRouterAPI(apiKey, context) {
-            const selectedModel = modelSelect.value;
-            if (!selectedModel) { updateStatus("Error: No model selected.", true); return { error: 'config_error', message: 'No model selected.' }; }
-            const baseURL = "https://openrouter.ai/api/v1";
-            const headers = { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" };
-            const systemPrompt = `You are an expert curriculum designer specializing in psychology. Your task is to transform a raw text segment from a book into a concise and varied instruction-response pair for an AI model's training data. From the text chunk provided below, create ONLY ONE of the following types of interactions: 1. A definitional question. 2. A scenario-based question. 3. An interpretive question about a specific action. 4. A 'how-to' or application question. 5. A comparative question. RULES: - Choose a different type of question for each new text chunk you process. - The response MUST be grounded exclusively in the provided text. - Keep the instruction and the response clear, accurate, and concise. - Your final output must be ONLY a single, valid JSON object with two keys: "instruction" and "output". Do not add explanations or markdown. Here is the text chunk: --- ${context} ---`;
-            const messages = [{ role: "user", content: systemPrompt }];
-            const targetDisplay = targetPairs > 0 ? `/${targetPairs}` : '';
-            updateStatus(`Generating with ${selectedModel} (Pair ${currentPairs + 1}${targetDisplay})...`);
-            try {
-                const response = await fetch(`${baseURL}/chat/completions`, { method: "POST", headers: headers, body: JSON.stringify({ model: selectedModel, messages: messages, response_format: { type: "json_object" } }), });
-                if (!response.ok) { const errorBody = await response.text(); let detail = errorBody; try { detail = JSON.parse(errorBody).error?.message || errorBody; } catch (e) { } throw new Error(`API Error: ${response.status} ${response.statusText} - ${detail}`); }
-                const completion = await response.json();
-                const rawContent = completion.choices[0]?.message?.content?.trim();
-                if (!rawContent) { throw new Error("API Error: Received an empty response."); }
-                updateStatus(`Received response from ${selectedModel}. Parsing...`);
-                let parsedJson = JSON.parse(rawContent);
-                if (typeof parsedJson !== 'object' || !parsedJson.instruction || !parsedJson.output) { throw new Error("Parsed JSON has incorrect format."); }
-                return parsedJson;
-            } catch (error) { console.error(`Error with API call or parsing:`, error); updateStatus(`Error: ${error.message}`); return { error: 'api_or_parse_error', message: error.message }; }
-        }
-
-        // --- PDF Processing (MODIFIED to save state) ---
-        async function processPDFs(apiKey) {
-            const batchSize = 4;
-            for (let fileIndex = 0; fileIndex < pdfFiles.length; fileIndex++) {
-                if (!isProcessing) break;
-                const file = pdfFiles[fileIndex];
-                updateStatus(`Loading PDF ${fileIndex + 1}/${pdfFiles.length}: ${file.name}...`);
-                let pdfDoc;
-                const objectUrl = URL.createObjectURL(file);
-                try {
-                    pdfDoc = await pdfjsLib.getDocument(objectUrl).promise;
-                    updateStatus(`Loaded ${file.name} (${pdfDoc.numPages} pages). Extracting text...`);
-                    const startPage = PAGES_TO_SKIP_START + 1;
-                    const endPage = pdfDoc.numPages - PAGES_TO_SKIP_END;
-                    if (startPage > endPage) { updateStatus(`Skipping ${file.name}: Not enough pages.`); continue; }
-                    let fullText = '';
-                    for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
-                        const page = await pdfDoc.getPage(pageNum);
-                        const textContent = await page.getTextContent();
-                        fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+            const streamInterval = setInterval(() => {
+                if (currentToken < tokens.length) {
+                    aiMessageEl.textContent += (currentToken > 0 ? ' ' : '') + tokens[currentToken];
+                    currentToken++;
+                    scrollToBottom();
+                } else {
+                    clearInterval(streamInterval);
+                    state.isTyping = false;
+                    elements.typingIndicator.classList.add('hidden');
+                    const chat = state.chats.find(c => c.id === state.currentChatId);
+                    if (chat) {
+                        chat.messages.push({ id: `msg-${Date.now()}`, role: 'ai', content: aiMessageEl.textContent });
+                        saveState();
                     }
-                    fullText = fullText.replace(/\s+/g, ' ').trim();
-                    const chunkSize = 2500;
-                    const textChunks = [];
-                    for (let i = 0; i < fullText.length; i += chunkSize) { textChunks.push(fullText.substring(i, i + chunkSize)); }
-                    updateStatus(`Split ${file.name} into ${textChunks.length} chunks. Processing in batches of ${batchSize}...`);
-                    for (let i = 0; i < textChunks.length; i += batchSize) {
-                        if (!isProcessing) break;
-                        const chunkBatch = textChunks.slice(i, i + batchSize);
-                        const targetDisplay = targetPairs > 0 ? `/${targetPairs}` : '';
-                        updateStatus(`Processing batch ${Math.floor(i / batchSize) + 1}. (Total pairs: ${currentPairs}${targetDisplay})`);
-                        const promises = chunkBatch.map(context => callOpenRouterAPI(apiKey, context));
-                        const results = await Promise.allSettled(promises);
-                        let batchHasNewData = false;
-                        results.forEach(result => {
-                            if (result.status === 'fulfilled' && result.value && !result.value.error) {
-                                if (targetPairs > 0 && currentPairs >= targetPairs) { isProcessing = false; return; }
-                                const finalObject = { source_book: file.name, system: "You are a helpful assistant specialized in psychology...", instruction: result.value.instruction, output: result.value.output };
-                                instructionDataset.push(finalObject);
-                                currentPairs++;
-                                batchHasNewData = true;
-                            } else { const errorMessage = result.reason?.message || result.value?.message || 'Unknown error'; console.warn(`A request in the batch failed: ${errorMessage}`); }
-                        });
-
-                        if (batchHasNewData) {
-                            updateOutput();
-                            saveState(); // *** SAVE PROGRESS HERE ***
-                        }
-
-                        if (targetPairs > 0 && currentPairs >= targetPairs) { isProcessing = false; }
-                        if (!isProcessing) break;
-                    }
-                } catch (pdfError) { console.error(`Error processing PDF ${file.name}:`, pdfError); updateStatus(`Error processing PDF: ${pdfError.message}. Skipping.`); }
-                finally { URL.revokeObjectURL(objectUrl); if (pdfDoc) await pdfDoc.destroy(); }
-                if (!isProcessing) break;
-            }
-        }
-
-
-        // --- Output & Button State Updates ---
-        function updateOutput() {
-            try {
-                const previewData = instructionDataset.slice(-50);
-                const previewText = previewData.map(item => JSON.stringify(item)).join('\n');
-                outputTextArea.value = (instructionDataset.length > 50 ? `Displaying last 50 of ${instructionDataset.length} total pairs...\n\n` : '') + previewText;
-                outputTextArea.scrollTop = outputTextArea.scrollHeight;
-                updateButtonStates();
-            } catch (e) { console.error("Error updating output:", e); outputTextArea.value = "Error displaying data."; }
-        }
-
-        function updateButtonStates() {
-            const hasData = instructionDataset.length > 0;
-            startButton.disabled = isProcessing;
-            stopButton.disabled = !isProcessing;
-            apiKeyInput.disabled = isProcessing;
-            targetPairsInput.disabled = isProcessing;
-            modelSelect.disabled = isProcessing;
-            fileInput.disabled = isProcessing;
-            clearButton.disabled = isProcessing;
-            document.querySelector('.select-pdf-button-container button').disabled = isProcessing;
-            dropZone.style.pointerEvents = isProcessing ? 'none' : 'auto';
-            dropZone.onclick = isProcessing ? null : () => document.getElementById('fileInput').click();
-            dropZone.style.opacity = isProcessing ? 0.6 : 1;
-            dropZone.style.cursor = isProcessing ? 'not-allowed' : 'pointer';
-            fileList.querySelectorAll('button').forEach(btn => btn.disabled = isProcessing);
-            downloadButton.disabled = isProcessing || !hasData;
-        }
-
-        // --- Start & Stop Button Logic (MODIFIED) ---
-        startButton.addEventListener('click', async () => {
-            const apiKey = apiKeyInput.value.trim(); if (!apiKey) { updateStatus("Error: API Key is required.", true); return; } if (pdfFiles.length === 0) { updateStatus("Error: Please select at least one PDF.", true); return; } if (!modelSelect.value) { updateStatus("Error: Please select a model.", true); return; }
-
-            if (instructionDataset.length > 0) {
-                if (!confirm(`You have a saved session with ${currentPairs} pairs. Do you want to continue adding to this session? (Click 'Cancel' to clear old data and start a new session).`)) {
-                    clearState();
                 }
+            }, 80); // Adjust speed of streaming
+        };
+
+        const handleSend = () => {
+            const text = elements.userInput.value.trim();
+            if (!text || state.isTyping) return;
+
+            const userMessage = { id: `msg-${Date.now()}`, role: 'user', content: text };
+
+            if (!state.currentChatId) {
+                const newChatId = `chat-${Date.now()}`;
+                const newChat = {
+                    id: newChatId,
+                    title: text.substring(0, 30) + (text.length > 30 ? '...' : ''),
+                    messages: [userMessage]
+                };
+                state.chats.unshift(newChat);
+                state.currentChatId = newChatId;
+                saveState();
+                navigateTo(`/chat/${newChatId}`); // This will re-render
+            } else {
+                createMessageElement('user', text);
+                const chat = state.chats.find(c => c.id === state.currentChatId);
+                if (chat) chat.messages.push(userMessage);
+                saveState();
             }
+            
+            elements.userInput.value = '';
+            handleInput();
+            streamAiResponse();
+        };
+        
+        const handleInput = () => {
+            elements.userInput.style.height = 'auto';
+            elements.userInput.style.height = `${elements.userInput.scrollHeight}px`;
+            elements.sendBtn.disabled = elements.userInput.value.trim() === '';
+        };
 
-            targetPairs = parseInt(targetPairsInput.value, 10) || 0; if (targetPairs < 0) targetPairs = 0; targetPairsInput.value = targetPairs;
-            isProcessing = true;
-            stopRequested = false;
-            updateButtonStates();
-            updateStatus(`Starting processing... Target: ${targetPairs > 0 ? targetPairs : 'unlimited'} pairs.`);
+        let confirmCallback = null;
+        const showModal = (title, text, callback) => {
+            elements.modalTitle.textContent = title;
+            elements.modalText.textContent = text;
+            confirmCallback = callback;
+            elements.confirmationModal.classList.add('show');
+        };
+        const hideModal = () => elements.confirmationModal.classList.remove('show');
+        elements.modalConfirmBtn.addEventListener('click', () => confirmCallback && confirmCallback());
+        elements.modalCancelBtn.addEventListener('click', hideModal);
 
-            try {
-                await processPDFs(apiKey);
-                if (stopRequested) { updateStatus(`Processing stopped by user (${currentPairs} pairs generated).`); }
-                else if (targetPairs > 0 && currentPairs >= targetPairs) { updateStatus(`Target of ${targetPairs} pairs reached. Auto-downloading...`); triggerDownload(); }
-                else { updateStatus(`Processing finished naturally (${currentPairs} pairs generated).`); }
-            } catch (error) { updateStatus(`CRITICAL ERROR: ${error.message}`, true); console.error("Critical error in startButton handler:", error); }
-            finally { isProcessing = false; stopRequested = false; updateButtonStates(); }
+        const showContextMenu = (e) => {
+            e.preventDefault();
+            const targetChatEl = e.target.closest('.sidebar-item');
+            if (!targetChatEl) return;
+            contextedChatId = targetChatEl.dataset.chatId;
+            elements.chatContextMenu.style.top = `${e.clientY}px`;
+            elements.chatContextMenu.style.left = `${e.clientX}px`;
+            elements.chatContextMenu.style.display = 'block';
+        };
+        const hideContextMenu = () => elements.chatContextMenu.style.display = 'none';
+
+        elements.analystBtn.addEventListener('click', () => updateSelectorUI('analyst'));
+        elements.companionBtn.addEventListener('click', () => updateSelectorUI('companion'));
+        elements.userInput.addEventListener('input', handleInput);
+        elements.userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } });
+        elements.sendBtn.addEventListener('click', handleSend);
+        elements.sidebar.addEventListener('mouseenter', () => elements.sidebar.classList.add('expanded'));
+        elements.sidebar.addEventListener('mouseleave', () => elements.sidebar.classList.remove('expanded'));
+        document.addEventListener('click', (e) => !e.target.closest('#chat-context-menu') && hideContextMenu());
+
+        const toggleSidebar = (forceClose = false) => {
+            const isOpen = elements.sidebar.classList.contains('sidebar-open');
+            if (forceClose || isOpen) {
+                elements.sidebar.classList.remove('sidebar-open');
+                elements.mobileOverlay.style.display = 'none';
+            } else {
+                elements.sidebar.classList.add('sidebar-open', 'expanded');
+                elements.mobileOverlay.style.display = 'block';
+            }
+        };
+        elements.menuToggleBtn.addEventListener('click', () => toggleSidebar());
+        elements.mobileOverlay.addEventListener('click', () => toggleSidebar(true));
+        elements.newChatBtn.addEventListener('click', () => { navigateTo('/'); toggleSidebar(true); });
+        
+        elements.chatHistory.addEventListener('click', e => {
+            const chatEl = e.target.closest('.sidebar-item');
+            if (chatEl && chatEl.dataset.chatId) {
+                navigateTo(`/chat/${chatEl.dataset.chatId}`);
+                toggleSidebar(true);
+            }
         });
 
-        stopButton.addEventListener('click', () => { if (!isProcessing) return; stopRequested = true; isProcessing = false; updateStatus("Stop requested..."); });
-
-        // --- Initial Load ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadState(); // Load any saved data on page load
-            updateButtonStates();
+        elements.chatHistory.addEventListener('contextmenu', showContextMenu);
+        elements.chatHistory.addEventListener('touchstart', e => {
+             const targetChatEl = e.target.closest('.sidebar-item');
+            if (!targetChatEl) return;
+            longPressTimer = setTimeout(() => showContextMenu(e.touches[0]), 500);
         });
+        elements.chatHistory.addEventListener('touchend', () => clearTimeout(longPressTimer));
+        elements.chatHistory.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+
+        elements.deleteChatBtn.addEventListener('click', () => {
+            hideContextMenu();
+            const chatToDelete = state.chats.find(c => c.id === contextedChatId);
+            showModal('Delete Chat', `Are you sure you want to delete "${chatToDelete.title}"?`, () => {
+                state.chats = state.chats.filter(c => c.id !== contextedChatId);
+                if (state.currentChatId === contextedChatId) navigateTo('/');
+                else renderChatHistory();
+                saveState();
+                hideModal();
+            });
+        });
+
+        const initialize = () => {
+            loadState();
+            router();
+            updateSelectorUI(state.activeMode || 'analyst');
+        };
+        
+        initialize();
+    });
     </script>
 </body>
 </html>
