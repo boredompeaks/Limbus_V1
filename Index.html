@@ -135,6 +135,7 @@
             background: var(--color-glass-bg); border: 1px solid var(--color-glass-border); border-radius: 15px;
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
             margin-bottom: 1rem;
+            min-height: 0; /* <<< LAYOUT FIX: Allows this flex item to shrink properly */
         }
         .control-panel { height: 1px; padding: 0.5rem; }
 
@@ -167,7 +168,12 @@
         
         .input-area-container { padding: 0 1.5rem 1rem 1.5rem; flex-shrink: 0; margin: 0 auto; width: 95%; max-width: 900px; }
 
-        #model-selector { display: flex; justify-content: center; margin-bottom: 0.75rem; gap: 8px; }
+        #model-selector { 
+            display: flex; 
+            gap: 8px;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
         .model-btn {
             background: transparent; border: 1px solid var(--color-glass-border); color: var(--color-text-secondary); padding: 0.25rem 0.75rem; border-radius: 16px;
             cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.3s ease;
@@ -295,11 +301,11 @@
                     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
                 </div>
                 <div class="input-area-container">
-                    <div id="model-selector">
-                        <button id="analyst-btn" class="model-btn active">Analyst</button>
-                        <button id="companion-btn" class="model-btn">Companion</button>
-                    </div>
                     <div class="input-area">
+                        <div id="model-selector">
+                            <button id="analyst-btn" class="model-btn active">Analyst</button>
+                            <button id="companion-btn" class="model-btn">Companion</button>
+                        </div>
                         <textarea id="user-input" placeholder="Enter your prompt here..." rows="1"></textarea>
                         <button id="send-btn" disabled>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24" fill="currentColor"><path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" /></svg>
@@ -425,11 +431,16 @@
         };
 
         // =================================================================================
-        // --- API INTEGRATION SECTION ---
         // =================================================================================
-
-        // LINE 565: REPLACE THIS URL WITH YOUR ACTUAL BACKEND ENDPOINT
-        const API_URL = '/api/v1/chat'; 
+        //
+        //    >>>   EDIT THIS LINE TO ADD YOUR API URL   <<<
+        //
+        //    This is the only line you need to change for the API.
+        //    Replace the placeholder with your actual backend endpoint.
+        //
+        // =================================================================================
+        // =================================================================================
+        const API_URL = '/api/v1/chat'; // <-- YOUR URL GOES HERE
 
         const streamAiResponse = async () => {
             state.isTyping = true;
@@ -443,13 +454,11 @@
                 const currentChat = state.chats.find(c => c.id === state.currentChatId);
                 if (!currentChat) throw new Error("Current chat not found.");
 
-                // Prepare the payload for the API
                 const payload = {
                     mode: state.activeMode,
                     messages: currentChat.messages.map(({ role, content }) => ({ role, content }))
                 };
 
-                // Make the POST request using the Fetch API
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -463,7 +472,6 @@
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
 
-                // Read the stream
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
@@ -474,7 +482,6 @@
                     scrollToBottom();
                 }
 
-                // Finalize the message in the state once streaming is complete
                 currentChat.messages.push({ id: `msg-${Date.now()}`, role: 'ai', content: fullResponse });
                 saveState();
 
@@ -519,7 +526,7 @@
             
             elements.userInput.value = '';
             handleInput();
-            streamAiResponse(); // This now calls the real API function
+            streamAiResponse();
         };
         
         const handleInput = () => {
