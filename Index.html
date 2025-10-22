@@ -75,8 +75,19 @@
 
         /* Responsive sidebar hover */
         @media (min-width: 768px) {
-            #sidebar.collapsed:hover { width: 260px; }
-            #sidebar.collapsed:hover .sidebar-text, #sidebar.collapsed:hover .chat-title, #sidebar.collapsed:hover .profile-name { display: inline; }
+            /* FIX 2: Only hover-open if NOT pinned */
+            #sidebar.collapsed:not(.pinned):hover { width: 260px; }
+            #sidebar.collapsed:not(.pinned):hover .sidebar-text, 
+            #sidebar.collapsed:not(.pinned):hover .chat-title, 
+            #sidebar.collapsed:not(.pinned):hover .profile-name { display: inline; }
+
+            /* FIX 2: Add 'pinned' state styles for desktop */
+            #sidebar.pinned { width: 260px; }
+            #sidebar.pinned .sidebar-text, 
+            #sidebar.pinned .chat-title, 
+            #sidebar.pinned .profile-name { display: inline; }
+            /* Rotate the pin/toggle icon */
+            #sidebar.pinned #toggle-icon-desktop { transform: rotate(180deg); }
         }
 
         #voice-btn.recording:before {
@@ -108,7 +119,6 @@
 </head>
 <body>
 
-    <!-- Loading Overlay -->
     <div id="loading-overlay" class="flex flex-col items-center justify-center">
         <div class="loader mb-6">
             <div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div>
@@ -117,31 +127,33 @@
     </div>
 
     <div class="flex h-screen">
-        <!-- Collapsible Sidebar -->
         <aside id="sidebar" class="bg-black/20 p-4 flex flex-col transition-all duration-300 ease-in-out flex-shrink-0">
-            <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                  <div class="flex items-center">
                     <svg class="w-8 h-8 text-cyan-400 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M14.082 2.182a.5.5 0 0 1 .103.557L12.23 8.35a.5.5 0 0 1-.69.318L8.35 6.696a.5.5 0 0 1 .318-.69l4.618-1.956a.5.5 0 0 1 .557.103zM6.696 8.35 8.652 3.732a.5.5 0 0 1 .69-.318l1.956 4.618a.5.5 0 0 1-.103.557L8.35 10.77a.5.5 0 0 1-.69-.318L6.696 8.35zm.004 11.292a.5.5 0 0 1-.103-.557l1.956-4.618a.5.5 0 0 1 .69-.318l2.976 1.26a.5.5 0 0 1 .318.69l-4.618 1.956a.5.5 0 0 1-.557-.103zm11.292-.004a.5.5 0 0 1 .103-.557l-1.956-4.618a.5.5 0 0 1-.69-.318l-2.976 1.26a.5.5 0 0 1-.318.69l4.618 1.956a.5.5 0 0 1 .557-.103z"/></svg>
                     <span class="font-orbitron text-xl font-bold sidebar-text">Cognitive Engine</span>
                 </div>
+                <div class="flex items-center">
+                    <button id="sidebar-toggle-desktop" class="hidden md:block p-2 text-gray-400 hover:text-white">
+                        <svg id="toggle-icon-desktop" class="w-6 h-6 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m0 0l7 7m-7-7h18"></path></svg>
+                    </button>
+                    <button id="sidebar-toggle-mobile" class="md:hidden p-2 text-gray-400 hover:text-white">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
             </div>
 
-            <!-- New Chat Button -->
             <button id="new-chat-btn" class="w-full flex items-center p-3 rounded-lg text-left text-sm font-medium bg-white/5 hover:bg-white/10 transition-colors mb-6">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 <span class="sidebar-text">New Chat</span>
             </button>
 
-            <!-- Chat History -->
             <div class="flex-grow overflow-y-auto">
                 <p class="text-xs text-gray-500 uppercase font-semibold mb-2 px-3 sidebar-text">History</p>
                 <ul id="chat-history-list" class="space-y-1">
-                    <!-- Placeholder items will be dynamically inserted here -->
-                </ul>
+                    </ul>
             </div>
             
-            <!-- Profile Section -->
             <div class="mt-auto pt-4 border-t border-white/10 relative">
                 <button id="profile-btn" class="flex items-center w-full p-2 rounded-lg hover:bg-white/10">
                     <img src="https://placehold.co/40x40/111827/F3F4F6?text=U" alt="User" class="w-8 h-8 rounded-full mr-3 flex-shrink-0">
@@ -154,14 +166,9 @@
                     </ul>
                 </div>
             </div>
-            <button id="sidebar-toggle-mobile" class="md:hidden absolute top-4 left-4 p-2 z-20">
-                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-            </button>
-        </aside>
+            </aside>
 
-        <!-- Main Content -->
         <main class="flex-1 flex flex-col h-screen overflow-hidden">
-            <!-- Initial Centered View -->
             <div id="initial-view" class="flex flex-col items-center justify-center h-full p-4">
                 <div class="text-center">
                     <svg class="w-16 h-16 text-cyan-400 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M14.082 2.182a.5.5 0 0 1 .103.557L12.23 8.35a.5.5 0 0 1-.69.318L8.35 6.696a.5.5 0 0 1 .318-.69l4.618-1.956a.5.5 0 0 1 .557.103zM6.696 8.35 8.652 3.732a.5.5 0 0 1 .69-.318l1.956 4.618a.5.5 0 0 1-.103.557L8.35 10.77a.5.5 0 0 1-.69-.318L6.696 8.35zm.004 11.292a.5.5 0 0 1-.103-.557l1.956-4.618a.5.5 0 0 1 .69-.318l2.976 1.26a.5.5 0 0 1 .318.69l-4.618 1.956a.5.5 0 0 1-.557-.103zm11.292-.004a.5.5 0 0 1 .103-.557l-1.956-4.618a.5.5 0 0 1-.69-.318l-2.976 1.26a.5.5 0 0 1-.318.69l4.618 1.956a.5.5 0 0 1 .557-.103z"/></svg>
@@ -190,11 +197,9 @@
                 </div>
             </div>
 
-            <!-- Chat View -->
             <div id="chat-view" class="hidden flex-1 flex flex-col overflow-hidden p-6">
                 <div id="chat-history-container" class="flex-1 overflow-y-auto pr-4 space-y-6">
-                    <!-- Messages will be injected here -->
-                </div>
+                    </div>
                 <div class="mt-6">
                     <div class="relative">
                         <button id="file-upload-btn" class="absolute left-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-white transition-colors">
@@ -217,7 +222,8 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- API Configuration ---
-        const VLLM_API_URL = 'https://e4c4e1ba68e1.ngrok-free.app/v1';
+        // FIX 1: The vLLM server's OpenAI-compatible endpoint is at /v1/chat/completions
+        const VLLM_API_URL = 'https://e4c4e1ba68e1.ngrok-free.app/v1/chat/completions';
         const MODEL_NAME = 'Malkani6/Limbus_V1'; // Assuming this is the model served
         const API_KEY = "not-needed-for-vllm"; // vLLM doesn't check the key
 
@@ -226,6 +232,8 @@
         const loadingText = document.getElementById('loading-text');
         const sidebar = document.getElementById('sidebar');
         const sidebarToggleMobile = document.getElementById('sidebar-toggle-mobile');
+        // FIX 2: Get the new desktop toggle button
+        const sidebarToggleDesktop = document.getElementById('sidebar-toggle-desktop'); 
         const profileBtn = document.getElementById('profile-btn');
         const profileMenu = document.getElementById('profile-menu');
         const newChatBtn = document.getElementById('new-chat-btn');
@@ -299,6 +307,14 @@
         
         // --- Sidebar Logic ---
         sidebarToggleMobile.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+        
+        // FIX 2: Add click listener for the new desktop toggle button
+        if (sidebarToggleDesktop) {
+            sidebarToggleDesktop.addEventListener('click', () => {
+                sidebar.classList.toggle('pinned');
+            });
+        }
+        
         if (window.innerWidth >= 768) { // Only collapse on desktop
            sidebar.classList.add('collapsed');
         }
@@ -379,7 +395,7 @@
             appendTypingIndicator();
 
             try {
-                const response = await fetch(VLLM_API_URL, {
+                const response = await fetch(VLLM_API_URL, { // FIX 1: This variable is now correct
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
