@@ -395,11 +395,16 @@
             appendTypingIndicator();
 
             try {
-                const response = await fetch(VLLM_API_URL, { // FIX 1: This variable is now correct
+                const response = await fetch(VLLM_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${API_KEY}` // Not needed for vLLM but good practice
+                        'Authorization': `Bearer ${API_KEY}`,
+                        
+                        // --- THIS IS THE FIX ---
+                        // This header tells ngrok to skip its "browser warning" page,
+                        // which was intercepting the request and causing the CORS error.
+                        'ngrok-skip-browser-warning': 'true'
                     },
                     body: JSON.stringify({
                         model: MODEL_NAME,
@@ -410,7 +415,16 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`API error: ${response.statusText}`);
+                    // Improved error handling to show more details from the API
+                    let errorText = response.statusText;
+                    try {
+                        // Try to parse the error message from vLLM
+                        const errData = await response.json();
+                        errorText += ` - ${errData.detail || JSON.stringify(errData)}`;
+                    } catch (e) {
+                        // Response was not JSON (e.g., a 502 Bad Gateway)
+                    }
+                    throw new Error(`API error: ${errorText}`);
                 }
 
                 const data = await response.json();
@@ -422,7 +436,8 @@
             } catch (error) {
                 console.error("Error sending message:", error);
                 removeTypingIndicator();
-                appendMessage(`**Error:** Unable to connect to the model. Please check the API status and your connection. \n*(${error.message})*`, 'ai');
+                // This will now show the more detailed error message
+                appendMessage(`**Error:** Unable to connect to the model. \n*(${error.message})*`, 'ai');
             }
         }
 
